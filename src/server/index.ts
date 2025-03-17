@@ -1,5 +1,7 @@
+import * as path from "path"
 import express from "express"
 import httpErrors from "http-errors"
+import morgan from "morgan"
 
 // custom routes
 import rootRoutes from "./roots/root"
@@ -8,8 +10,13 @@ import rootRoutes from "./roots/root"
 const app = express()
 const PORT = process.env.PORT || 3000
 
-app.use("/", rootRoutes)
+app.use(morgan("dev"))
 
+app.use(express.static(path.join(process.cwd(), "public")))
+app.set("views", path.join(process.cwd(), "src", "server", "templates"))
+app.set("view engine", "ejs")
+
+app.use("/", rootRoutes)
 
 app.use((_, __, next) => {
     next(httpErrors(404))

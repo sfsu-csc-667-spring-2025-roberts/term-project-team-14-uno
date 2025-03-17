@@ -3,7 +3,10 @@ import express from "express"
 const router = express.Router()
 
 router.get("/", (req, res) => {
-    res.send("hello world from root.ts")
+    const title = "Jacobs Site"
+    const name = "Miles"
+
+    res.render("root", {title, name})
 })
 
 
