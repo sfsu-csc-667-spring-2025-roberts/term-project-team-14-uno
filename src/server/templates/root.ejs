@@ -1,11 +1,284 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
+    <title>Document</title>
 </head>
-<body>
-    <p>Hello <%= name %></p>
+<style>
+    body,
+    html {
+        margin: 0;
+        padding: 0;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    .layout {
+        position: absolute;
+        width: 100vw;
+        height: 100vh;
+        background: radial-gradient(#016cb4, #001e3a);
+    }
+
+    .game-container {
+        height: 95%;
+        width: 85%;
+        margin: 20px auto;
+        /* background-color: #fff; */
+    }
+
+    .deck {
+        position: absolute;
+        height: 200px;
+        width: 250px;
+        /* background-color: grey; */
+        top: calc(50%);
+        left: calc(50%);
+        transform: translate(-50%, -50%);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+
+    .player {
+        position: absolute;
+        height: 200px;
+        width: 300px;
+        /* background-color: grey; */
+    }
+
+    .card {
+        display: inline-block;
+        width: calc(250px / 4);
+        height: calc(380px / 4);
+        filter: drop-shadow(0px 6px 6px #00000099);
+        cursor: pointer;
+    }
+
+    .card img {
+        max-width: 100%;
+    }
+</style>
+<script>
+    const test_players = 4
+    const config = {
+        angle: 360,
+        radius: 30, // percent
+        hand_height: 150,
+        hand_width: 200
+    }
+
+    var graphics_spec = {
+        card: {
+            width: 250 / 4,
+            height: 380 / 4,
+        },
+        hand: {
+            fan: 30, // deg
+            width: 800 / 4, // horizontal distance between centers of leftmost and rightmost cards
+        },
+    }
+
+    function draw_hand(cards, player_div) {
+        // var hand = document.getElementById("my-hand");
+        let hand = player_div
+        var d_angle = graphics_spec.hand.fan / (cards.length - 1);
+        var w_card = graphics_spec.card.width;
+        var h_card = graphics_spec.card.height;
+        var w_hand = Math.min(graphics_spec.hand.width, cards.length * w_card);
+        var rad_deg = Math.PI / 180;
+        // let div, img, rot, rot_less, rot_more, d_x, d_y, i;
+        // let i;
+
+        while (hand.hasChildNodes()) hand.removeChild(hand.firstChild);
+
+        for (let i = 0; i < cards.length; i++) {
+            let div, img, rot, rot_less, rot_more, d_x, d_y;
+
+            div = document.createElement("div");
+            div.classList.add("card");
+
+            img = document.createElement("img");
+            img.setAttribute("src", cards[i] + ".svg");
+
+            div.appendChild(img);
+            hand.appendChild(div);
+
+            if (cards.length < 2) continue;
+
+            rot = i * d_angle - graphics_spec.hand.fan / 2;
+
+            d_x = i * (w_hand - w_card) / (cards.length - 1) + (cards.length * w_card - w_hand) / 2 - i * w_card;
+
+            rot_more = Math.abs(rot);
+            rot_less = Math.max(0, rot_more - d_angle);
+            d_y = (h_card / 2 * Math.cos(rot_less * rad_deg) + w_card / 2 * Math.sin(rot_less * rad_deg))
+                - (h_card / 2 * Math.cos(rot_more * rad_deg) - w_card / 2 * Math.sin(rot_more * rad_deg));
+
+            div.style.transform = "translate(" + Math.round(d_x) + "px," + Math.round(d_y) + "px) rotate(" + rot + "deg)";
+
+
+            // Add event listeners for hover effect
+            div.addEventListener("mouseenter", () => {
+                div.style.transform += " translateY(-25px)";
+            });
+
+            div.addEventListener("mouseleave", () => {
+                div.style.transform = "translate(" + Math.round(d_x) + "px," + Math.round(d_y) + "px) rotate(" + rot + "deg)";
+            });
+            // TEST ANIMATE
+            div.addEventListener("click", () => {
+                const rect = div.getBoundingClientRect()
+                console.log(rect)
+                const abs_container = document.querySelector(".game-container")
+                const abs_card = document.createElement("div");
+                abs_card.classList.add("card");
+
+                const abs_img = document.createElement("img");
+                abs_img.setAttribute("src", cards[i] + ".svg");
+                abs_card.appendChild(abs_img)
+                abs_card.style.position = "absolute";
+                abs_card.style.left = `${rect.left + window.scrollX}px`;
+                abs_card.style.top = `${rect.top + window.scrollY}px`;
+                abs_card.style.transition = "all 0.5s ease-in-out";
+                abs_container.appendChild(abs_card);
+                hand.removeChild(div)
+
+                // move abs card
+                setTimeout(() => {
+                    const discard = document.querySelector(".discard")
+                    const newRect = discard.getBoundingClientRect();  // Replace with your actual function to get new position
+                    abs_card.style.left = `${newRect.left + window.scrollX}px`;
+                    abs_card.style.top = `${newRect.top + window.scrollY}px`;
+
+                    // Remove the card after the animation completes
+                    abs_card.addEventListener("transitionend", () => {
+                        abs_card.remove();
+                    });
+                }, 50);
+
+            });
+        }
+    }
+
+    function draw_hand_other(cards, player_div) {
+        // var hand = document.getElementById("my-hand");
+        let hand = player_div
+        var d_angle = graphics_spec.hand.fan / (cards.length - 1);
+        var w_card = graphics_spec.card.width;
+        var h_card = graphics_spec.card.height;
+        var w_hand = Math.min(graphics_spec.hand.width, cards.length * w_card);
+        var rad_deg = Math.PI / 180;
+        var div, img, rot, rot_less, rot_more, d_x, d_y, i;
+
+        while (hand.hasChildNodes()) hand.removeChild(hand.firstChild);
+
+        for (i = 0; i < cards.length; i++) {
+
+            div = document.createElement("div");
+            div.classList.add("card");
+
+            img = document.createElement("img");
+            img.setAttribute("src", "card_back" + ".svg");
+
+            div.appendChild(img);
+            hand.appendChild(div);
+
+            if (cards.length < 2) continue;
+
+            rot = i * d_angle - graphics_spec.hand.fan / 2;
+
+            d_x = i * (w_hand - w_card) / (cards.length - 1) + (cards.length * w_card - w_hand) / 2 - i * w_card;
+
+            rot_more = Math.abs(rot);
+            rot_less = Math.max(0, rot_more - d_angle);
+            d_y = (h_card / 2 * Math.cos(rot_less * rad_deg) + w_card / 2 * Math.sin(rot_less * rad_deg))
+                - (h_card / 2 * Math.cos(rot_more * rad_deg) - w_card / 2 * Math.sin(rot_more * rad_deg));
+
+            div.style.transform = "translateX(" + Math.round(d_x) + "px)";
+        }
+    }
+
+    const draw_players = (players) => {
+        var my_hand = [
+            "card-3",
+            "card-4",
+            "card-5",
+            "card-6",
+            "card-7",
+        ]
+        const radians = Math.PI / 180
+        const n = players
+        const gc = document.querySelector('.game-container')
+        for (let i = 0; i < players; i++) {
+            const div = document.createElement('div')
+            div.classList.add(`player`)
+            const angle = (-Math.PI / 2) + (i * radians * (360 / n))
+            const dy = config.radius * Math.sin(angle)
+            console.log("i: ", i, "\tplayers: ", players, "\tangle: ", angle, "\tdy: ", dy)
+            const dx = config.radius * Math.cos(angle)
+            div.style.left = "calc(" + (50 + "%" + " + " + dx + "%") + ")"
+            div.style.top = "calc(" + (50 + "%" + " - " + dy + "%") + ")"
+            div.style.transform = "translate(-50%, -50%)"
+            div.style.display = "flex"
+            div.style.justifyContent = "center"
+            div.style.alignItems = "center"
+            gc.appendChild(div)
+            if (i == 0) {
+                draw_hand(my_hand, div)
+            } else {
+                draw_hand_other(my_hand, div)
+            }
+        }
+    }
+
+    function draw_decks() {
+        draw_pile()
+        discard_pile()
+    }
+    function draw_pile() {
+        const deck_div = document.querySelector(".draw")
+        let div = document.createElement("div");
+        div.classList.add("card");
+
+        let img = document.createElement("img");
+        img.setAttribute("src", "card_back" + ".svg");
+        div.appendChild(img);
+        deck_div.appendChild(div);
+    }
+    function discard_pile() {
+        const deck_div = document.querySelector(".discard")
+        let div = document.createElement("div");
+        div.classList.add("card");
+        div.classList.add("discard")
+
+        let img = document.createElement("img");
+        img.setAttribute("src", "card-3" + ".svg");
+        div.appendChild(img);
+        deck_div.appendChild(div);
+    }
+
+    const main = () => {
+        draw_decks()
+        draw_players(4)
+    }
+
+</script>
+
+<body onload="main()">
+    <div class="layout">
+        <div class="game-container">
+            <div class="deck">
+                <div class="draw"></div>
+                <div class="discard"></div>
+            </div>
+        </div>
+    </div>
+
 </body>
+
 </html>
