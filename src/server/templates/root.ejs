@@ -63,7 +63,12 @@
         max-width: 100%;
     }
 </style>
+<script src="/socket.io/socket.io.js"></script>
 <script>
+    let socket = io();
+    socket.on("connect", () => {
+        console.log(`connected with ${socket.id}`)
+    })
     const test_players = 4
     const config = {
         angle: 360,

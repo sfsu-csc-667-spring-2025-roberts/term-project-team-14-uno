@@ -3,9 +3,11 @@ import express, { urlencoded } from "express";
 import httpErrors from "http-errors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import { Server } from "socket.io";
 
 // custom routes
 import rootRoutes from "./roots/root";
+import apiRoutes from "./roots/api";
 // custom middleware
 
 const app = express();
@@ -21,11 +23,21 @@ app.set("views", path.join(process.cwd(), "src", "server", "templates"));
 app.set("view engine", "ejs");
 
 app.use("/", rootRoutes);
+app.use("/api", apiRoutes);
 
 app.use((_, __, next) => {
   next(httpErrors(404));
 });
 
-app.listen(PORT, () => {
+const expressServer = app.listen(PORT, () => {
   console.log("server listening at port: ", PORT);
+});
+
+const io = new Server(expressServer);
+io.on("connection", (socket) => {
+  console.log(`User ${socket.id} connected`);
+  socket.on("message", (data) => {
+    console.log(data);
+    io.emit("message", `${socket.id.substring(0, 5)}: ${data}`);
+  });
 });
