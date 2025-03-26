@@ -10,10 +10,8 @@ router.get("/", (req, res) => {
   res.render("index");
 });
 router.get("/game", (req, res) => {
-  const title = "Jacobs Site";
-  const name = "Miles";
-  console.log(gameManager.games);
-  res.render("root");
+  // console.log(gameManager.games);
+  res.render("game-room");
 });
 
 export default router;

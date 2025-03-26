@@ -65,9 +65,16 @@
 </style>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    let socket = io();
+    const params = new URLSearchParams(window.location.search);
+    const gid = params.get("gid");
+    const userId = params.get("pid");
+    let socket = io({ query: { userId } });
+
     socket.on("connect", () => {
         console.log(`connected with ${socket.id}`)
+    })
+    socket.on("play-notification", (data) => {
+        console.log(data)
     })
     const test_players = 4
     const config = {

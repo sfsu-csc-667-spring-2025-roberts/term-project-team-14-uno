@@ -5,6 +5,9 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import { Server } from "socket.io";
 
+//custom class
+import gameManager from "./game/GameStore";
+
 // custom routes
 import rootRoutes from "./roots/root";
 import apiRoutes from "./roots/api";
@@ -35,9 +38,26 @@ const expressServer = app.listen(PORT, () => {
 
 const io = new Server(expressServer);
 io.on("connection", (socket) => {
-  console.log(`User ${socket.id} connected`);
-  socket.on("message", (data) => {
+  const userId = socket.handshake.query.userId;
+  console.log("user id: ", userId, " type is: ", typeof userId);
+  if (!userId || Array.isArray(userId)) {
+    console.log("issue with connection user id");
+  } else {
+    gameManager.updateSocket(userId, socket.id);
+  }
+  console.log(`User ${userId} connected on ${socket.id}`);
+
+  socket.on("game-state", (gid, userId) => {
+    const playerState = gameManager.games[gid].getPlayerSubset(userId);
+    const playerSocket = gameManager.players[userId].socketId;
+    if (playerSocket) {
+      io.to(playerSocket).emit("state-update", playerState);
+    } else {
+      console.log("error finding player in game-state");
+    }
+  });
+
+  socket.on("play", (data) => {
     console.log(data);
-    io.emit("message", `${socket.id.substring(0, 5)}: ${data}`);
   });
 });

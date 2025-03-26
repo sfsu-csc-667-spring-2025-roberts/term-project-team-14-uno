@@ -2,6 +2,7 @@ import Card from "./Card";
 import { Color } from "./Card";
 import deck from "./Deck";
 import Player from "./Player";
+import gameManager from "./GameStore";
 
 interface Action {
   type: string;
@@ -14,8 +15,10 @@ class GameState {
   deck: Card[];
   players: Player[];
   turn: number;
+  turnIncrement: number;
   state: string;
   numPlayers: number;
+  topCard: Card | null;
 
   constructor(gameId: string, numPlayers: number = 4) {
     this.gameId = gameId;
@@ -25,12 +28,14 @@ class GameState {
     );
     this.players = [];
     this.turn = 0;
+    this.turnIncrement = 1;
     this.state = "uninitialized";
     this.numPlayers = numPlayers;
+    this.topCard = null;
   }
 
   addPlayer(id: string) {
-    this.players.push(new Player(id));
+    this.players.push(new Player(id, this.players.length));
     if (this.players.length === this.numPlayers) {
       this.init();
     }
@@ -46,6 +51,7 @@ class GameState {
     for (let i = 0; i < this.numPlayers * 7; i++) {
       this.players[i % 4].hand.push(this.deck[i]);
     }
+    this.deck = this.deck.splice(0, this.numPlayers * 7);
     this.state = "wait";
   }
 
@@ -54,7 +60,13 @@ class GameState {
       case "wait":
         if (action.type === "play" && action.card) {
           this.state = "play";
-          this.handleCardPlay(action.card, action.playerId);
+          const cardPlayed = this.handleCardPlay(action.card, action.playerId);
+          if (!cardPlayed) {
+            // handle error
+          }
+          this.turn += this.turnIncrement;
+          this.state = "wait";
+          this.topCard = action.card;
         }
         break;
       case "play":
@@ -66,16 +78,36 @@ class GameState {
   handleCardPlay(card: Card, id: string) {
     if (this.isValidCard(card)) {
       const selectPlayer = this.players.find((player) => player.id === id);
-      selectPlayer?.hand.filter(
+      const idx = selectPlayer?.hand.findIndex(
         (handCard) =>
           handCard.value !== card.value && handCard.color !== card.color,
       );
+      if (idx && idx !== -1 && selectPlayer) {
+        selectPlayer.hand.splice(idx, 1);
+      }
+      return true;
     }
 
     return true;
   }
   isValidCard(card: Card) {
     return true;
+  }
+
+  getPlayerSubset(playerId: string) {
+    const playerIdx = this.players.findIndex(
+      (player) => player.id === playerId,
+    );
+    console.log(playerIdx);
+    if (playerIdx === null || playerIdx < 0) {
+      return null;
+    }
+    return {
+      gameState: this.state,
+      topCard: this.topCard, // null first turn
+      myPlayer: this.players[playerIdx],
+      players: this.players.map((player) => player.hand.length),
+    };
   }
 }
 

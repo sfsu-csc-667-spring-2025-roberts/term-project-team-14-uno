@@ -3,13 +3,16 @@ import GameState from "./GameState";
 interface GameMap {
   [gameId: string]: GameState;
 }
+interface PlayerMap {
+  [playerId: string]: { socketId: string | null; gameId: string };
+}
 
 class GameStore {
   static instance: GameStore;
   static id: number = 1;
 
   games: GameMap;
-  players: Object;
+  players: PlayerMap;
 
   constructor() {
     this.games = {};
@@ -34,6 +37,7 @@ class GameStore {
       const gs = new GameState(String(GameStore.getGameId()));
       gs.addPlayer(userId);
       this.games[gs.gameId] = gs;
+      this.players[userId] = { socketId: null, gameId: gs.gameId };
       return gs.gameId;
     }
 
@@ -44,6 +48,12 @@ class GameStore {
       }
     }
     return null;
+  }
+
+  updateSocket(userId: string, socketId: string) {
+    console.log(this.players[userId]);
+    console.log("update socket user: ", userId, " and socket: ", socketId);
+    this.players[userId].socketId = socketId;
   }
 }
 
