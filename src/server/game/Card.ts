@@ -1,12 +1,14 @@
 class Card {
   value: number;
   img: string;
-  color: string;
+  color: Color;
+  type: CardType;
 
-  constructor(value: number, img: string, color: string) {
+  constructor(value: number, img: string, color: Color, type: CardType) {
     this.value = value;
     this.img = img;
     this.color = color;
+    this.type = type;
   }
 }
 
@@ -15,6 +17,13 @@ export enum Color {
   RED = "RED",
   YELLOW = "YELLOW",
   GREEN = "GREEN",
+}
+
+export enum CardType {
+  REGULAR = "REGULAR",
+  REVERSE = "REVERSE",
+  DRAW = "DRAW",
+  WILD = "WILD",
 }
 
 export default Card;

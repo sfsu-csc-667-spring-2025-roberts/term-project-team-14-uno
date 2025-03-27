@@ -62,22 +62,32 @@
     .card img {
         max-width: 100%;
     }
+
+    .wait {
+        height: 200px;
+        width: 400px;
+        position: absolute;
+        background-color: white;
+        border-radius: 3px;
+        top: calc(50% - 100px);
+        left: calc(50% - 200px);
+    }
 </style>
 <script src="/socket.io/socket.io.js"></script>
 
 <body onload="main()">
     <div class="layout">
         <div class="game-container">
-            <div class="deck">
+            <!-- <div class="deck">
                 <div class="draw"></div>
                 <div class="discard"></div>
-            </div>
+            </div> -->
         </div>
     </div>
     <script>
         // constant and global vars
         const params = new URLSearchParams(window.location.search);
-        let gameState = null;
+        let gameState = null
         const gid = params.get("gid");
         const userId = params.get("pid");
         const test_players = 4
@@ -100,18 +110,36 @@
         let socket = io({ query: { userId } });
         socket.on("connect", () => {
             console.log(`connected with ${socket.id}`)
+            socket.emit("join-game", gid)
             socket.emit("game-state", gid, userId);
         })
-        socket.on("play-notification", (data) => {
-            console.log("play notification ", data)
+
+        socket.on("start", () => {
+            const wait = document.querySelector(".wait")
+            if(wait) wait.remove()
+
+            draw_decks_container()
         })
+
         socket.on("state-update", (data) => {
-            console.log("state update ", data)
             gameState = data
-            // draw_decks(gameState.top)
-            // draw_players(gameState.players)
+            console.log(gameState)
+            // reorder players so that current player is p1 at index 0
+            gameState.players = gameState?.players.slice(gameState?.myPlayerIdx).concat(gameState?.players.slice(0, gameState?.myPlayerIdx))
+            if (gameState?.gameState !== "uninitialized" && data?.gameState !== "finished") {
+                draw_decks(gameState.top)
+                draw_players(gameState)
+            }
         })
-        
+
+        //for game room messages from server
+        socket.on("start-game", (msg) => {
+            console.log("Message from room start notification :", msg);
+            socket.emit("game-state", gid, userId);
+        });
+        socket.on("message", (msg) => {
+            console.log("Message from room:", msg);
+        });
 
         function draw_player_hand(cards, player_div) {
             let hand = player_div
@@ -130,7 +158,7 @@
                 div.classList.add("card");
 
                 img = document.createElement("img");
-                img.setAttribute("src", cards[i] + ".svg");
+                img.setAttribute("src", "card_img/" + cards[i].img);
 
                 div.appendChild(img);
                 hand.appendChild(div);
@@ -192,7 +220,7 @@
             }
         }
 
-        function draw_opponent_hand(cards, player_div) {
+        function draw_opponent_hand(numCards, player_div) {
             let hand = player_div
             var d_angle = graphics_spec.hand.fan / (cards.length - 1);
             var w_card = graphics_spec.card.width;
@@ -203,7 +231,7 @@
 
             while (hand.hasChildNodes()) hand.removeChild(hand.firstChild);
 
-            for (i = 0; i < cards.length; i++) {
+            for (i = 0; i < cards; i++) {
 
                 div = document.createElement("div");
                 div.classList.add("card");
@@ -229,16 +257,10 @@
             }
         }
 
-        const draw_players = (players) => {
-            var my_hand = [
-                "card-3",
-                "card-4",
-                "card-5",
-                "card-6",
-                "card-7",
-            ]
+        const draw_players = (gameState) => {
+            var my_hand = gameState.myPlayer.hand
             const radians = Math.PI / 180
-            const n = players
+            const n = gameState.players.length
             const gc = document.querySelector('.game-container')
             for (let i = 0; i < players; i++) {
                 const div = document.createElement('div')
@@ -257,15 +279,31 @@
                 if (i == 0) {
                     draw_player_hand(my_hand, div)
                 } else {
-                    draw_opponent_hand(my_hand, div)
+                    draw_opponent_hand(gameState.players[i], div)
                 }
             }
+        }
+
+        function draw_decks_container() {
+            const gc = document.querySelector(".game-container")
+            let deck = document.createElement("div")
+            deck.classList.add("deck")
+
+            let draw = document.createElement("div")
+            draw.classList.add("draw")
+            deck.appendChild(draw)
+            let discard = document.createElement("div")
+            discard.classList.add("draw")
+            deck.appendChild(discard)
+
+            gc.appendChild(decl)
         }
 
         function draw_decks(topCard) {
             draw_pile()
             discard_pile(topCard)
         }
+
         function draw_pile() {
             const deck_div = document.querySelector(".draw")
             while (deck_div.hasChildNodes()) deck_div.removeChild(deck_div.firstChild);
@@ -290,9 +328,33 @@
             deck_div.appendChild(div);
         }
 
+        function draw_waiting_indicator() {
+            const gc = document.querySelector(".game-container")
+
+            const waitDiv = document.createElement("div")
+            waitDiv.classList.add("wait")
+            waitDiv.style.display = "flex"
+            waitDiv.style.flexDirection = "column"
+            waitDiv.style.alignItems = "center"
+
+            const title = document.createElement("h1")
+            title.innerText = "Waiting for game to begin..."
+            title.style.textAlign = "center"
+            waitDiv.appendChild(title)
+
+            const spinner = document.createElement("div")
+            spinner.style.height = "20px"
+            spinner.style.width = "20px"
+            spinner.style.backgroundColor = "black"
+            waitDiv.appendChild(spinner)
+
+            gc.appendChild(waitDiv)
+        }
+
         const main = () => {
+            draw_waiting_indicator()
             // socket.emit("game-state", gid, userId)
-            draw_decks()
+            // draw_decks()
             // draw_players(4)
         }
     </script>

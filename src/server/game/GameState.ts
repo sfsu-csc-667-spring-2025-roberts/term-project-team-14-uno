@@ -1,5 +1,5 @@
 import Card from "./Card";
-import { Color } from "./Card";
+import { Color, CardType } from "./Card";
 import deck from "./Deck";
 import Player from "./Player";
 import gameManager from "./GameStore";
@@ -24,7 +24,12 @@ class GameState {
     this.gameId = gameId;
     this.deck = deck.map(
       (card) =>
-        new Card(card.value, card.img, Color[card.color as keyof typeof Color]),
+        new Card(
+          card.value,
+          card.img,
+          Color[card.color as keyof typeof Color],
+          CardType[card.type as keyof typeof CardType],
+        ),
     );
     this.players = [];
     this.turn = 0;
@@ -32,13 +37,6 @@ class GameState {
     this.state = "uninitialized";
     this.numPlayers = numPlayers;
     this.topCard = null;
-  }
-
-  addPlayer(id: string) {
-    this.players.push(new Player(id, this.players.length));
-    if (this.players.length === this.numPlayers) {
-      this.init();
-    }
   }
 
   init() {
@@ -94,6 +92,16 @@ class GameState {
     return true;
   }
 
+  /*
+    these are all the app management methods. Not directly related to the management of game flow
+  **/
+  addPlayer(id: string) {
+    this.players.push(new Player(id, this.players.length));
+    if (this.players.length === this.numPlayers) {
+      this.init();
+    }
+  }
+
   getPlayerSubset(playerId: string) {
     const playerIdx = this.players.findIndex(
       (player) => player.id === playerId,
@@ -102,10 +110,12 @@ class GameState {
     if (playerIdx === null || playerIdx < 0) {
       return null;
     }
+    console.log("in get player subset with idx: ", playerIdx);
     return {
       gameState: this.state,
       topCard: this.topCard, // null first turn
       myPlayer: this.players[playerIdx],
+      myPlayerIdx: playerIdx,
       players: this.players.map((player) => player.hand.length),
     };
   }
