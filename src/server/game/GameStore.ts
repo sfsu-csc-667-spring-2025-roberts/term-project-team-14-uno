@@ -33,7 +33,7 @@ class GameStore {
   }
 
   joinGame(userId: string) {
-    console.log();
+    console.log("user joining with id ", userId);
     if (Object.keys(this.games).length === 0) {
       // or check if all games full?
       const gs = new GameState(String(GameStore.getGameId()));
@@ -46,13 +46,23 @@ class GameStore {
 
     for (let id in this.games) {
       if (this.games[id].state === "uninitialized") {
+        console.log("founduninitialized game: ", id);
         this.games[id].addPlayer(userId);
+        this.players[userId] = { socketId: null, gameId: id };
         const start =
           this.games[id].players.length === this.games[id].numPlayers;
         // return {gameId: id, startGame: start};
-        if (start) {
-          getIO().to(id).emit("start-game", "start");
-        }
+        console.log(
+          "start condition players: ",
+          this.games[id].players.length,
+          " and required num: ",
+          this.games[id].numPlayers,
+        );
+        // if (start) {
+        //   console.log("it is start")
+        //   getIO().to(id).emit("start-game", "start");
+        // }
+        console.log("about to return ", id);
         return id;
       }
     }
@@ -60,7 +70,7 @@ class GameStore {
   }
 
   updateSocket(userId: string, socketId: string) {
-    console.log(this.players[userId]);
+    console.log("player entry in game manager: ", this.players[userId]);
     console.log("update socket user: ", userId, " and socket: ", socketId);
     this.players[userId].socketId = socketId;
   }

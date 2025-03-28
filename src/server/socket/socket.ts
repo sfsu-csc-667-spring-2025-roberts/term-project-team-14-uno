@@ -23,6 +23,9 @@ export function initSocket(server: HttpServer) {
       console.log(`User ${socket.id} joined room: ${gid}`);
       socket.join(gid);
       io!.to(gid).emit("message", `User ${socket.id} has joined the room`);
+      if (gameManager.games[gid].state === "ready") {
+        io!.to(gid).emit("start-game", "start");
+      }
     });
 
     socket.on("game-state", (gid, userId) => {

@@ -50,7 +50,7 @@ class GameState {
       this.players[i % 4].hand.push(this.deck[i]);
     }
     this.deck = this.deck.splice(0, this.numPlayers * 7);
-    this.state = "wait";
+    this.state = "ready";
   }
 
   update(action: Action) {
