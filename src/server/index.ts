@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import * as path from "path";
 import express, { urlencoded } from "express";
 import httpErrors from "http-errors";
@@ -12,6 +15,7 @@ import { initSocket } from "./socket/socket";
 // custom routes
 import rootRoutes from "./roots/root";
 import apiRoutes from "./roots/api";
+import testRoutes from "./roots/test";
 // custom middleware
 
 const app = express();
@@ -28,6 +32,7 @@ app.set("view engine", "ejs");
 
 app.use("/", rootRoutes);
 app.use("/api", apiRoutes);
+app.use("/test", testRoutes);
 
 app.use((_, __, next) => {
   next(httpErrors(404));
