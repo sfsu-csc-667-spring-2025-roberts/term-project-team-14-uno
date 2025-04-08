@@ -1,0 +1,142 @@
+:root {
+  --scaling-factor: 0.5;
+  --deck-width: 250px;
+  --deck-height: 200px;
+}
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.layout {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(#016cb4, #001e3a);
+}
+
+.game-container {
+  height: 95%;
+  width: 85%;
+  margin: 20px auto;
+  position: relative;
+  /* background-color: #fff; */
+}
+
+.deck {
+  position: absolute;
+  height: var(--deck-height);
+  /* width: var(--deck-width); */
+  width: 8%;
+  /* background-color: grey; */
+  top: calc(50%);
+  left: calc(50%);
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.player {
+  position: absolute;
+  height: 400px;
+  /* width: 900px; */
+  width: 40%;
+  z-index: 1000;
+  /* height: 200px;
+    width: 300px; */
+  /* background-color: grey; */
+}
+
+.select {
+  position: absolute;
+  height: 150px;
+  width: 40%;
+  background-color: rgba(128, 128, 128, 0.478);
+  border-radius: 50%;
+}
+
+.card {
+  display: inline-block;
+  width: calc(8%);
+  /* width: calc(62px / var(--scaling-factor)); */
+  /* height: calc(93px / var(--scaling-factor)); */
+  /* height: calc(8% * (93/62)); */
+  aspect-ratio: 62 / 93;
+  filter: drop-shadow(0px 6px 6px #00000099);
+  cursor: pointer;
+}
+
+/* .card.draw,
+.card.discard {
+    width: 40%;
+} */
+
+.card img {
+  width: 100%;
+}
+
+.wait {
+  height: 200px;
+  width: 400px;
+  position: absolute;
+  background-color: white;
+  border-radius: 3px;
+  top: calc(50% - 100px);
+  left: calc(50% - 200px);
+}
+
+.indicator {
+  width: 50%;
+  height: 20%;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, -50%);
+}
+
+.indicator__score {
+  width: 80%;
+  height: 60%;
+  z-index: 1200;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #910000;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.8);
+}
+
+.indicator__player {
+  width: 60%;
+  height: 40%;
+  z-index: 1100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #eeba00;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.indicator__score span {
+  font-size: 2rem;
+  font-weight: bold;
+  color: white;
+}
+
+.indicator__player span {
+  margin: 0 auto;
+  text-decoration: underline;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: white;
+}
