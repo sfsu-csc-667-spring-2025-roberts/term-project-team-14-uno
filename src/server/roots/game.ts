@@ -1,8 +1,5 @@
 import express from "express";
 
-import authRouter from "./auth";
-import gameRouter from "./game";
-
 import gameManager from "../game/GameStore";
 
 const router = express.Router();
@@ -25,8 +22,5 @@ router.post("/join", (req, res) => {
 
   res.json({ success: true, gid: gameId });
 });
-
-router.use("/auth", authRouter);
-router.use("/game", gameRouter);
 
 export default router;

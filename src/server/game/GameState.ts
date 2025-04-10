@@ -10,6 +10,14 @@ interface Action {
   playerId: string;
 }
 
+export interface PlayerGameState {
+  gameState: string;
+  topCard: Card | null;
+  myPlayer: Player;
+  myPlayerIdx: number;
+  players: number[];
+}
+
 class GameState {
   gameId: string;
   deck: Card[];
@@ -102,7 +110,7 @@ class GameState {
     }
   }
 
-  getPlayerSubset(playerId: string) {
+  getPlayerSubset(playerId: string): PlayerGameState | null {
     const playerIdx = this.players.findIndex(
       (player) => player.id === playerId,
     );
