@@ -19,10 +19,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
       notNull: true,
       default: pgm.func("now()"),
     },
-    test_string: {
-      type: "varchar(1000)",
-      notNull: true,
-    },
   });
 }
 
