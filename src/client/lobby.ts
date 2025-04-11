@@ -1,7 +1,7 @@
 console.log("hello world");
 const userId = generateRandomId();
 document.querySelector(".start")!.addEventListener("click", async () => {
-  const res = await fetch("/api/join", {
+  const res = await fetch("/api/game/join", {
     method: "post",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ userId }),

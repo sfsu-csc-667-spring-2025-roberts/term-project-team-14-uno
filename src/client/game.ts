@@ -76,8 +76,10 @@ const main = async () => {
   // gameState = res
   // draw_decks(gameState.topCard)
   // draw_players(gameState)
+  console.log("main fn");
   draw_waiting_indicator();
 };
+window.addEventListener("load", main);
 
 // Main drawing hand functions
 const draw_players = (gameState: PlayerGameState) => {

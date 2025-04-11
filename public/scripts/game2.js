@@ -64,6 +64,7 @@ socket.on("message", (msg) => {
 });
 
 const main = async () => {
+  console.log("in main");
   // draw_decks_container()
   // let res = await fetch("gs.json")
   // res = await res.json()

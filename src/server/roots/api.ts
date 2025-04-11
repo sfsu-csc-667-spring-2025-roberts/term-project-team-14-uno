@@ -11,20 +11,20 @@ const router = express.Router();
 // router.get("/join", async (req, res) => {
 
 // })
-router.post("/join", (req, res) => {
-  const { userId } = req.body;
-  if (!userId) {
-    res.status(401).json({ success: false, msg: "you are not logged in" });
-    return;
-  }
-  const gameId = gameManager.joinGame(userId);
-  if (!gameId) {
-    res.status(500).json({ success: false, msg: "error joining a game" });
-    return;
-  }
+// router.post("/join", (req, res) => {
+//   const { userId } = req.body;
+//   if (!userId) {
+//     res.status(401).json({ success: false, msg: "you are not logged in" });
+//     return;
+//   }
+//   const gameId = gameManager.joinGame(userId);
+//   if (!gameId) {
+//     res.status(500).json({ success: false, msg: "error joining a game" });
+//     return;
+//   }
 
-  res.json({ success: true, gid: gameId });
-});
+//   res.json({ success: true, gid: gameId });
+// });
 
 router.use("/auth", authRouter);
 router.use("/game", gameRouter);
