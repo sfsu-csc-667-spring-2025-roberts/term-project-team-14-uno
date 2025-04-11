@@ -12,8 +12,12 @@ router.post("/register", async (req: Request, res: Response) => {
 
   const id = await User.register(email, password);
 
-  res.json({ success: true, id });
+  //   @ts-ignore
+  req.session.userId = id;
+
+  res.redirect("/");
 });
+
 router.post("/login", async (req: Request, res: Response) => {
   console.log("login hit");
   const { email, password } = req.body;
@@ -23,7 +27,16 @@ router.post("/login", async (req: Request, res: Response) => {
     res.status(401).json({ success: false, id: null });
     return;
   }
-  res.json({ success: true, id: user.id });
+
+  // @ts-ignore
+  req.session.userId = user.id;
+  res.redirect("/");
+});
+
+router.get("/logout", async (req: Request, res: Response) => {
+  req.session.destroy(() => {
+    res.redirect("/login");
+  });
 });
 
 export default router;

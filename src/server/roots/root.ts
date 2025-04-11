@@ -1,9 +1,10 @@
 import express from "express";
 import gameManager from "../game/GameStore";
+import { authMiddleware } from "../middleware/auth";
 
 const router = express.Router();
 
-router.get("/", (req, res) => {
+router.get("/", authMiddleware, (req, res) => {
   res.render("index");
 });
 router.get("/game", (req, res) => {
