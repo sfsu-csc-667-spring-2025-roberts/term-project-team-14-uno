@@ -48,18 +48,19 @@ class GameState {
   }
 
   init() {
-    // shuffle deck
+    // shuffle this.deck
     for (let i = this.deck.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [deck[i], deck[j]] = [deck[j], deck[i]];
+      [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
     }
     // distribute cards
     for (let i = 0; i < this.numPlayers * 7; i++) {
-      this.players[i % 4].hand.push(this.deck[i]);
+      this.players[i % this.numPlayers].hand.push(this.deck[i]);
     }
-    this.deck = this.deck.splice(0, this.numPlayers * 7);
+    this.deck = this.deck.slice(this.numPlayers * 7); // update to use the remaining cards
     this.state = "ready";
   }
+  
 
   update(action: Action) {
     switch (this.state) {
