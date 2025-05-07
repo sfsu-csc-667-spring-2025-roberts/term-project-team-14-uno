@@ -36,8 +36,9 @@ app.use("/", rootRoutes);
 app.use("/api", apiRoutes);
 app.use("/test", testRoutes);
 
-app.use((_, __, next) => {
-  next(httpErrors(404));
+app.use((req, res, next) => {
+  console.warn(`404 Not Found: ${req.method} ${req.originalUrl}`);
+  next(httpErrors(404, `Route ${req.method} ${req.originalUrl} not found`));
 });
 
 const expressServer = app.listen(PORT, () => {

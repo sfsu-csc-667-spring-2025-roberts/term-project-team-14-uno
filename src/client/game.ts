@@ -1,7 +1,7 @@
 import { io, Socket } from "socket.io-client";
 
 import { Action, PlayerGameState } from "../server/game/GameState";
-import Card, { CardType } from "../server/game/Card";
+import Card, { CardType } from "./Card";
 
 // constant and global vars
 const scaling_factor = 0.5; //for card size
@@ -31,7 +31,7 @@ let socket = io({ query: { userId } });
 socket.on("connect", () => {
   console.log(`connected with ${socket.id}`);
   socket.emit("join-game", gid);
-  socket.emit("game-state", gid, userId);
+  // socket.emit("game-state", gid, userId);
 });
 
 //for game room messages from server
@@ -59,7 +59,7 @@ socket.on("state-update", (data) => {
   ) {
     console.log("in here in state update");
     console.log("data: ", data);
-    draw_decks(gameState.top);
+    draw_decks(gameState.topCard);
     draw_players(gameState);
   }
 });
@@ -92,6 +92,7 @@ window.addEventListener("load", main);
 
 // Main drawing hand functions
 const draw_players = (gameState: PlayerGameState) => {
+  console.log("drawing players");
   var my_hand = gameState.myPlayer.hand;
   const radians = Math.PI / 180;
   const n = gameState.players.length;
@@ -99,11 +100,13 @@ const draw_players = (gameState: PlayerGameState) => {
   for (let i = 0; i < gameState.players.length; i++) {
     let div;
     div = selectPlayerContainer(i);
-    if (!div) {
-      div = document.createElement("div");
-      div.classList.add(`player`);
-      div.classList.add(`p${i}`);
+    console.log("selected player, it exists? ", div);
+    if (div) {
+      div.remove(); // Remove the existing container
     }
+    div = document.createElement("div");
+    div.classList.add(`player`);
+    div.classList.add(`p${i}`);
     if (!(div instanceof HTMLDivElement)) {
       console.log("somehow the div was not a div..?");
       return;
@@ -126,13 +129,16 @@ const draw_players = (gameState: PlayerGameState) => {
     gc.appendChild(div);
     if (i == 0) {
       draw_player_hand(my_hand, div);
-      draw_player_indicator(div, dx, dy);
-      if (gameState.turn === 0) {
-        console.log("elo there players select");
-        draw_player_select(div, dx, dy);
-      }
+      draw_player_indicator(div, dx, dy, i);
+      console.log("about to do select logic");
     } else {
       draw_opponent_hand(gameState.players[i], div);
+    }
+    if (!document.querySelector(`.select.p${i}`)) {
+      console.log("needs to draw original select");
+      draw_player_select(div, dx, dy, i);
+    } else {
+      togglePlayerSelect(i);
     }
   }
 };
@@ -210,7 +216,8 @@ function draw_player_hand(cards: Card[], player_div: HTMLDivElement) {
     });
     // TEST ANIMATE
     div.addEventListener("click", () => {
-      if (!play_card(cards[i], undefined)) {
+      if (!play_card(cards[i], i, undefined)) {
+        console.log("Card played");
         return;
       }
       const rect = div.getBoundingClientRect();
@@ -328,25 +335,56 @@ const draw_player_select = (
   playerDiv: HTMLDivElement,
   dx: number,
   dy: number,
+  playerIndex: number,
 ) => {
   const gc = document.querySelector(".game-container");
   if (!gc) {
     return;
   }
-  const select = document.querySelector(".select");
-  if (select) {
-    select.remove();
+  if (document.querySelector(`.select.p${playerIndex}`)) {
+    console.log("Whoa wtf why does this already exist");
+    return;
   }
   const div = document.createElement("div");
   div.classList.add("select");
+  div.classList.add(`p${playerIndex}`);
+  if (playerIndex !== gameState!.turn) {
+    div.classList.add(`hidden`);
+  }
   div.style.left = "calc(" + (50 + "%" + " + " + dx + "%") + ")";
   div.style.top = "calc(" + (50 + "%" + " - " + dy + "%") + ")";
   div.style.transform = "translate(-50%, -15%)";
   gc.appendChild(div);
 };
+const togglePlayerSelect = (i: number) => {
+  console.log("toggling");
+  const selectDiv = document.querySelector(`.select.p${i}`);
+  if (!selectDiv) {
+    console.log("error toggling player select");
+    return;
+  }
+  if (i === gameState!.turn && selectDiv.classList.contains("hidden")) {
+    console.log(
+      "game state turn is : ",
+      gameState!.turn,
+      " removing hidden for player: ",
+      i,
+    );
+    selectDiv.classList.remove("hidden");
+  }
+  if (i !== gameState!.turn && !selectDiv.classList.contains("hidden")) {
+    console.log(
+      "game state turn is : ",
+      gameState!.turn,
+      " adding hidden for player: ",
+      i,
+    );
+    selectDiv.classList.add("hidden");
+  }
+};
 
 const selectPlayerContainer = (playerIdx: number) => {
-  const div = document.querySelector(`.p${playerIdx}`);
+  const div = document.querySelector(`.player.p${playerIdx}`);
   return div;
 };
 
@@ -354,10 +392,15 @@ const draw_player_indicator = (
   playerDiv: HTMLDivElement,
   dx: number,
   dy: number,
+  playerIndex: number,
 ) => {
   const gc = document.querySelector(".game-container");
+  if (document.querySelector(`.indicator.p${playerIndex}`)) {
+    return;
+  }
   const userIndicatorDiv = document.createElement("div");
   userIndicatorDiv.classList.add("indicator");
+  userIndicatorDiv.classList.add(`p${playerIndex}`);
 
   const scoreDiv = document.createElement("div");
   scoreDiv.classList.add("indicator__score");
@@ -378,7 +421,11 @@ const draw_player_indicator = (
   playerDiv.appendChild(userIndicatorDiv);
 };
 
-async function play_card(card: Card, color: string | undefined) {
+async function play_card(
+  card: Card,
+  cardIndex: number,
+  color: string | undefined,
+) {
   if (!(gameState!.turn === 0)) {
     //show invalid
     return false;
@@ -394,19 +441,12 @@ async function play_card(card: Card, color: string | undefined) {
   action = {
     type: "play",
     card,
+    cardIndex,
     playerId: userId!,
     gameId: gid!,
     wildColor: color,
   };
-  // socket.emit("play", action, (response: { success: boolean; message?: string }) => {
-  //   if (response.success) {
-  //     console.log("Card played successfully!");
-  //     return true
-  //   } else {
-  //     console.warn("Invalid action:", response.message);
-  //     return false
-  //   }
-  // });
+  console.log("about to play card with action: ", action);
   const res = await fetch("/api/game/play-card", {
     method: "post",
     headers: { "Content-Type": "application/json" },
@@ -414,6 +454,7 @@ async function play_card(card: Card, color: string | undefined) {
   });
   const resJson = await res.json();
   if (resJson.success) {
+    console.log("play success");
     return true;
   } else {
     console.warn("Invalid action:", resJson?.msg);
@@ -435,7 +476,9 @@ function draw_decks_container() {
   deck.classList.add("deck");
   gc.appendChild(deck);
 }
+
 function draw_decks(topCard: Card) {
+  console.log("drawing decks");
   draw_pile();
   discard_pile(topCard);
 }
@@ -462,6 +505,7 @@ function draw_pile() {
 }
 function discard_pile(topCard: Card) {
   // const deck_div = document.querySelector(".discard")
+  console.log("in discard pile");
   const deck_div = document.querySelector(".deck");
   if (!deck_div) {
     return;
@@ -469,6 +513,7 @@ function discard_pile(topCard: Card) {
   const w_card = (deck_div.getBoundingClientRect().width * 5) / 10;
   const h_card = w_card * (93 / 62);
   if (!deck_div) return;
+  console.log("in discard pile past the check for deck div");
   // while (deck_div.hasChildNodes()) deck_div.removeChild(deck_div.firstChild);
   let div = document.createElement("div");
   div.classList.add("card");
@@ -477,9 +522,12 @@ function discard_pile(topCard: Card) {
   div.style.height = h_card + "px";
 
   let img = document.createElement("img");
+  console.log("in discard pile done all this shit about to check card image");
   if (!topCard) {
+    console.log("in discard pile default card blank");
     img.setAttribute("src", "card_img/" + "card_placeholder.svg");
   } else {
+    console.log("in discard pile setting card image: ", topCard.img);
     img.setAttribute("src", "card_img/" + topCard.img);
   }
   div.appendChild(img);

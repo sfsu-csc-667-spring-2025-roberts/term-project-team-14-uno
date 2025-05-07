@@ -33,7 +33,8 @@ router.post("/play-card", (req, res) => {
     return;
   }
 
-  const isPlay = gameManager.games[gid].update(action);
+  const isPlay = gameManager.games[gid].update(typedAction);
+  console.log("play card: ", gameManager.games[gid].state);
 
   res.json({ success: true });
 });
