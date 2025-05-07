@@ -1,7 +1,7 @@
 import { io, Socket } from "socket.io-client";
 
-import { PlayerGameState } from "../server/game/GameState";
-import Card from "../server/game/Card";
+import { Action, PlayerGameState } from "../server/game/GameState";
+import Card, { CardType } from "../server/game/Card";
 
 // constant and global vars
 const scaling_factor = 0.5; //for card size
@@ -48,10 +48,11 @@ socket.on("state-update", (data) => {
   gameState = data;
   console.log(gameState);
   console.log(JSON.stringify(gameState));
+  // should be done on server now
   // reorder players so that current player is p1 at index 0
-  gameState.players = gameState?.players
-    .slice(gameState?.myPlayerIdx)
-    .concat(gameState?.players.slice(0, gameState?.myPlayerIdx));
+  // gameState.players = gameState?.players
+  //   .slice(gameState?.myPlayerIdx)
+  //   .concat(gameState?.players.slice(0, gameState?.myPlayerIdx));
   if (
     gameState?.gameState !== "uninitialized" &&
     data?.gameState !== "finished"
@@ -66,6 +67,14 @@ socket.on("state-update", (data) => {
 // potentially chat
 socket.on("message", (msg) => {
   console.log("Message from room:", msg);
+});
+
+socket.on("action-update", () => {
+  fetch("/api/game/state-update", {
+    method: "post",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ gid, userId }),
+  });
 });
 
 const main = async () => {
@@ -117,8 +126,11 @@ const draw_players = (gameState: PlayerGameState) => {
     gc.appendChild(div);
     if (i == 0) {
       draw_player_hand(my_hand, div);
-      draw_player_select(div, dx, dy);
       draw_player_indicator(div, dx, dy);
+      if (gameState.turn === 0) {
+        console.log("elo there players select");
+        draw_player_select(div, dx, dy);
+      }
     } else {
       draw_opponent_hand(gameState.players[i], div);
     }
@@ -198,6 +210,9 @@ function draw_player_hand(cards: Card[], player_div: HTMLDivElement) {
     });
     // TEST ANIMATE
     div.addEventListener("click", () => {
+      if (!play_card(cards[i], undefined)) {
+        return;
+      }
       const rect = div.getBoundingClientRect();
       console.log(rect);
       const abs_container = document.querySelector(".layout");
@@ -318,6 +333,10 @@ const draw_player_select = (
   if (!gc) {
     return;
   }
+  const select = document.querySelector(".select");
+  if (select) {
+    select.remove();
+  }
   const div = document.createElement("div");
   div.classList.add("select");
   div.style.left = "calc(" + (50 + "%" + " + " + dx + "%") + ")";
@@ -358,6 +377,53 @@ const draw_player_indicator = (
   userIndicatorDiv.appendChild(playerIdDiv);
   playerDiv.appendChild(userIndicatorDiv);
 };
+
+async function play_card(card: Card, color: string | undefined) {
+  if (!(gameState!.turn === 0)) {
+    //show invalid
+    return false;
+  }
+  if (!isValidCard(card)) {
+    //show invalid?
+    return false;
+  }
+  if (card.type === CardType.WILD) {
+    // handle wild selection
+  }
+  let action: Action;
+  action = {
+    type: "play",
+    card,
+    playerId: userId!,
+    gameId: gid!,
+    wildColor: color,
+  };
+  // socket.emit("play", action, (response: { success: boolean; message?: string }) => {
+  //   if (response.success) {
+  //     console.log("Card played successfully!");
+  //     return true
+  //   } else {
+  //     console.warn("Invalid action:", response.message);
+  //     return false
+  //   }
+  // });
+  const res = await fetch("/api/game/play-card", {
+    method: "post",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, gid, action }),
+  });
+  const resJson = await res.json();
+  if (resJson.success) {
+    return true;
+  } else {
+    console.warn("Invalid action:", resJson?.msg);
+    return false;
+  }
+}
+
+function isValidCard(card: Card) {
+  return true;
+}
 
 // Drawing decks in the middle
 function draw_decks_container() {

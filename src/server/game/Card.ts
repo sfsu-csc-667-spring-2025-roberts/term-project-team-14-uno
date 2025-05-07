@@ -10,6 +10,14 @@ class Card {
     this.color = color;
     this.type = type;
   }
+  equals(other: Card): boolean {
+    return (
+      this.value === other.value &&
+      this.img === other.img &&
+      this.color === other.color &&
+      this.type === other.type
+    );
+  }
 }
 
 export enum Color {
@@ -22,6 +30,7 @@ export enum Color {
 export enum CardType {
   REGULAR = "REGULAR",
   REVERSE = "REVERSE",
+  SKIP = "SKIP",
   DRAW = "DRAW",
   WILD = "WILD",
 }

@@ -3,11 +3,14 @@ import { Color, CardType } from "./Card";
 import deck from "./Deck";
 import Player from "./Player";
 import gameManager from "./GameStore";
+import { getIO } from "../socket/socket";
 
-interface Action {
+export interface Action {
   type: string;
   card?: Card;
+  wildColor?: string;
   playerId: string;
+  gameId: string;
 }
 
 export interface PlayerGameState {
@@ -16,6 +19,7 @@ export interface PlayerGameState {
   myPlayer: Player;
   myPlayerIdx: number;
   players: number[];
+  turn: number;
 }
 
 class GameState {
@@ -41,7 +45,7 @@ class GameState {
     );
     this.players = [];
     this.turn = 0;
-    this.turnIncrement = 1;
+    this.turnIncrement = -1;
     this.state = "uninitialized";
     this.numPlayers = numPlayers;
     this.topCard = null;
@@ -57,10 +61,10 @@ class GameState {
     for (let i = 0; i < this.numPlayers * 7; i++) {
       this.players[i % this.numPlayers].hand.push(this.deck[i]);
     }
-    this.deck = this.deck.slice(this.numPlayers * 7); // update to use the remaining cards
+    this.deck = this.deck.splice(0, this.numPlayers * 7);
+    this.topCard = this.deck.pop()!;
     this.state = "ready";
   }
-  
 
   update(action: Action) {
     switch (this.state) {
@@ -70,35 +74,76 @@ class GameState {
           const cardPlayed = this.handleCardPlay(action.card, action.playerId);
           if (!cardPlayed) {
             // handle error
+          } else {
+            this.broadcastStateUpdate();
           }
-          this.turn += this.turnIncrement;
-          this.state = "wait";
-          this.topCard = action.card;
         }
         break;
       case "play":
-        // do something
+        // return busy?
         break;
     }
   }
 
   handleCardPlay(card: Card, id: string) {
-    if (this.isValidCard(card)) {
-      const selectPlayer = this.players.find((player) => player.id === id);
-      const idx = selectPlayer?.hand.findIndex(
-        (handCard) =>
-          handCard.value !== card.value && handCard.color !== card.color,
-      );
-      if (idx && idx !== -1 && selectPlayer) {
-        selectPlayer.hand.splice(idx, 1);
+    // check if valid
+    if (!this.isValidCard(card)) {
+      return false;
+    }
+    this.topCard = card;
+    const idx = this.players[this.turn].hand.findIndex((card) =>
+      card.equals(card!),
+    );
+    if (idx === -1) {
+      return false;
+    }
+    // handle special card
+    if (card.type === CardType.REVERSE) {
+      this.turnIncrement *= -1;
+    } else if (card.type === CardType.SKIP) {
+      this.turn = this.incrementTurn();
+    } else if (card.type === CardType.DRAW) {
+      // send draw message
+      const player = this.incrementTurn();
+      if (card.value === 2) {
+        this.players[player].hand = [
+          ...this.players[player].hand,
+          this.deck.pop()!,
+          this.deck.pop()!,
+        ];
+      } else {
+        this.players[player].hand = [
+          ...this.players[player].hand,
+          this.deck.pop()!,
+          this.deck.pop()!,
+          this.deck.pop()!,
+          this.deck.pop()!,
+        ];
       }
-      return true;
+    } else if (card.type === CardType.WILD) {
+      // do something
     }
 
+    this.state = "wait";
+    this.turn = this.incrementTurn();
     return true;
   }
+
+  incrementTurn(): number {
+    return (this.turn + this.turnIncrement + this.numPlayers) % this.numPlayers;
+  }
+
   isValidCard(card: Card) {
-    return true;
+    return (
+      card.value !== this.topCard!.value ||
+      card.color !== this.topCard!.color ||
+      card.type !== this.topCard!.type ||
+      card.type === CardType.WILD
+    );
+  }
+
+  handleWinner() {
+    // do stuff
   }
 
   /*
@@ -111,14 +156,48 @@ class GameState {
     }
   }
 
+  messagePlayer(index: number, data: any, socketEvent: string) {
+    // socket message to player
+    const player = this.players[index];
+    // call game manager, send message
+    const playerSocket = gameManager.players[player.id].socketId;
+    if (!playerSocket) {
+      return false;
+    }
+    getIO().to(playerSocket).emit(socketEvent, data);
+    return true;
+  }
+  messagePlayerId(id: string) {
+    // socket message to player
+    const player = this.players.findIndex((player) => player.id === id);
+    // call game manager, send message
+  }
+
+  broadcastStateUpdate() {
+    for (let i = 0; i < this.numPlayers; i++) {
+      this.messagePlayer(
+        i,
+        this.getPlayerSubset(this.players[i].id),
+        "state-update",
+      );
+    }
+  }
+
   getPlayerSubset(playerId: string): PlayerGameState | null {
     const playerIdx = this.players.findIndex(
       (player) => player.id === playerId,
     );
-    console.log(playerIdx);
     if (playerIdx === null || playerIdx < 0) {
       return null;
     }
+
+    const players = this.players.map((player) => player.hand.length);
+    const playerArray = players
+      .slice(playerIdx)
+      .concat(players.slice(0, playerIdx));
+
+    const newTurn =
+      (this.turn - playerIdx + this.players.length) % this.players.length;
     console.log("in get player subset with idx: ", playerIdx);
     return {
       gameState: this.state,
@@ -126,6 +205,7 @@ class GameState {
       myPlayer: this.players[playerIdx],
       myPlayerIdx: playerIdx,
       players: this.players.map((player) => player.hand.length),
+      turn: newTurn,
     };
   }
 }

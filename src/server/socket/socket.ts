@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
 import gameManager from "../game/GameStore";
+import { Action } from "../game/GameState";
 
 let io: Server | null = null;
 
@@ -39,8 +40,21 @@ export function initSocket(server: HttpServer) {
       }
     });
 
-    socket.on("play", (data) => {
+    socket.on("play", (data: Action, callback) => {
       console.log(data);
+      // const isValid = validateAction(action); // Your logic here
+      const isValid = true;
+
+      if (isValid) {
+        // Process action
+        io!.emit("action_broadcast", data); // For example
+        callback({ success: true });
+      } else {
+        callback({
+          success: false,
+          message: "That move is not allowed right now.",
+        });
+      }
     });
   });
 }
