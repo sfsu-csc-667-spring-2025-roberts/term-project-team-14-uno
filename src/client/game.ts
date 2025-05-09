@@ -1,6 +1,8 @@
 import { io, Socket } from "socket.io-client";
 
-import { Action, PlayerGameState } from "../server/game/GameState";
+// import { Action, PlayerGameState } from "../client/game/GameState";
+import { Action } from "./Action";
+import { PlayerGameState } from "./PlayerGameState";
 import Card, { CardType } from "./Card";
 
 // constant and global vars
