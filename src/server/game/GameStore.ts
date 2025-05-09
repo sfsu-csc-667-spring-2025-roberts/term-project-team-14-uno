@@ -1,5 +1,8 @@
 import GameState from "./GameState";
 import { getIO } from "../socket/socket";
+import Sockets from "../db/socket/index";
+import Games from "../db/game/index";
+import { GameDB, GameStateDB } from "../db/game/GameDbType";
 
 interface GameMap {
   [gameId: string]: GameState;
@@ -32,22 +35,23 @@ class GameStore {
     return ++this.id;
   }
 
-  joinGame(userId: string) {
+  joinGame(userId: number, username: string) {
     console.log("user joining with id ", userId);
     if (Object.keys(this.games).length === 0) {
       // or check if all games full?
       const gs = new GameState(String(GameStore.getGameId()));
-      gs.addPlayer(userId);
+      gs.addPlayer(userId, username);
       this.games[gs.gameId] = gs;
       this.players[userId] = { socketId: null, gameId: gs.gameId };
       // return {gameId: gs.gameId, startGame: false}; // maybe update if we allow single player
+      Games.addGameRecord(gs.serializeOnlyGS());
       return gs.gameId;
     }
-
+    // check for open game
     for (let id in this.games) {
       if (this.games[id].state === "uninitialized") {
         console.log("founduninitialized game: ", id);
-        this.games[id].addPlayer(userId);
+        this.games[id].addPlayer(userId, username);
         this.players[userId] = { socketId: null, gameId: id };
         const start =
           this.games[id].players.length === this.games[id].numPlayers;
@@ -66,13 +70,34 @@ class GameStore {
         return id;
       }
     }
-    return null;
+    // all games full, create new
+    const gs = new GameState(String(GameStore.getGameId()));
+    gs.addPlayer(userId, username);
+    this.games[gs.gameId] = gs;
+    this.players[userId] = { socketId: null, gameId: gs.gameId };
+    Games.addGameRecord(gs.serializeOnlyGS());
+    return gs.gameId;
   }
 
-  updateSocket(userId: string, socketId: string) {
+  updateSocket(userId: number, socketId: string, gameId: string) {
     console.log("player entry in game manager: ", this.players[userId]);
     console.log("update socket user: ", userId, " and socket: ", socketId);
     this.players[userId].socketId = socketId;
+    Sockets.updateSocket(socketId, userId, gameId);
+  }
+
+  getTestId(): number {
+    if (Object.keys(this.games).length === 0) {
+      return 0;
+    }
+
+    for (let id in this.games) {
+      if (this.games[id].state === "uninitialized") {
+        console.log("founduninitialized game: ", id);
+        return this.games[id].players.length;
+      }
+    }
+    return -1;
   }
 }
 

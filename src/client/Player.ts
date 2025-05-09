@@ -1,12 +1,14 @@
 import Card from "./Card";
 
 class Player {
-  id: string;
+  id: number;
+  username: string | null;
   index: number; //for which player in gs list
   hand: Card[];
 
-  constructor(id: string, index: number) {
+  constructor(id: number, username: string, index: number) {
     this.id = id;
+    this.username = username;
     this.index = index;
     this.hand = [];
   }

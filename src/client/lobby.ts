@@ -1,16 +1,16 @@
 console.log("hello world");
-const userId = generateRandomId();
+const username = generateRandomId();
 document.querySelector(".start")!.addEventListener("click", async () => {
   const res = await fetch("/api/game/join", {
     method: "post",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId }),
+    body: JSON.stringify({ username }),
   });
   const resJson = await res.json();
   if (!resJson.success) {
     console.log("error");
   }
-  window.location.href = `/game?gid=${resJson.gid}&pid=${userId}`;
+  window.location.href = `/game?gid=${resJson.gid}&pid=${resJson.userId}`;
 });
 // replace with cookie/auth system
 function generateRandomId() {

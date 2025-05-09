@@ -27,7 +27,7 @@ var graphics_spec = {
 };
 
 // sockets
-let socket = io({ query: { userId } });
+let socket = io({ query: { userId, gid } });
 socket.on("connect", () => {
   console.log(`connected with ${socket.id}`);
   socket.emit("join-game", gid);

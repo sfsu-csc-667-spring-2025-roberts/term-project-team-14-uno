@@ -14,6 +14,8 @@ router.post("/register", async (req: Request, res: Response) => {
 
   //   @ts-ignore
   req.session.userId = id;
+  //   @ts-ignore
+  req.session.username = email;
 
   res.redirect("/");
 });
@@ -30,6 +32,8 @@ router.post("/login", async (req: Request, res: Response) => {
 
   // @ts-ignore
   req.session.userId = user.id;
+  //   @ts-ignore
+  req.session.username = email;
   res.redirect("/");
 });
 

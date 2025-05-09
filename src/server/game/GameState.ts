@@ -4,6 +4,8 @@ import deck from "./Deck";
 import Player from "../../client/Player";
 import gameManager from "./GameStore";
 import { getIO } from "../socket/socket";
+import { GameDB, GameStateDB } from "../db/game/GameDbType";
+import Game from "../db/game/index";
 
 export interface Action {
   type: string;
@@ -62,9 +64,10 @@ class GameState {
     for (let i = 0; i < this.numPlayers * 7; i++) {
       this.players[i % this.numPlayers].hand.push(this.deck[i]);
     }
-    this.deck = this.deck.splice(0, this.numPlayers * 7);
-    // this.topCard = this.deck.pop()!;
+    // remove distributed from deck
+    this.deck.splice(0, this.numPlayers * 7);
     this.state = "wait";
+    Game.serializeInitialGame(this.serializeToSQL());
   }
 
   update(action: Action) {
@@ -158,8 +161,14 @@ class GameState {
   /*
     these are all the app management methods. Not directly related to the management of game flow
   **/
-  addPlayer(id: string) {
-    this.players.push(new Player(id, this.players.length));
+  // addPlayer(id: string) {
+  //   this.players.push(new Player(this.players.length, id, this.players.length));
+  //   if (this.players.length === this.numPlayers) {
+  //     this.init();
+  //   }
+  // }
+  addPlayer(id: number, username: string) {
+    this.players.push(new Player(id, username, this.players.length));
     if (this.players.length === this.numPlayers) {
       this.init();
     }
@@ -176,7 +185,7 @@ class GameState {
     getIO().to(playerSocket).emit(socketEvent, data);
     return true;
   }
-  messagePlayerId(id: string) {
+  messagePlayerId(id: number) {
     // socket message to player
     const player = this.players.findIndex((player) => player.id === id);
     // call game manager, send message
@@ -193,7 +202,7 @@ class GameState {
     }
   }
 
-  getPlayerSubset(playerId: string): PlayerGameState | null {
+  getPlayerSubset(playerId: number): PlayerGameState | null {
     const playerIdx = this.players.findIndex(
       (player) => player.id === playerId,
     );
@@ -222,6 +231,78 @@ class GameState {
       players: this.players.map((player) => player.hand.length),
       turn: newTurn,
     };
+  }
+
+  serializeToSQL(): GameDB {
+    const game = {
+      game_id: this.gameId,
+      state: this.state,
+      turn: this.turn,
+      turn_increment: this.turnIncrement,
+      num_players: this.numPlayers,
+    };
+    if (this.state === "uninitialized") {
+      return { game, cards: [], players: [] };
+    }
+    const players = this.players.map((player) => ({
+      game_id: this.gameId,
+      player_index: player.index,
+      user_id: player.id,
+    }));
+
+    const cards: {
+      game_id: string;
+      value: number;
+      img: string;
+      color: string;
+      type: string;
+      location: string;
+      position: number | null;
+      owner_id: number | null;
+    }[] = this.deck.map((card, idx) => ({
+      game_id: this.gameId,
+      value: card.value,
+      img: card.img,
+      color: card.color,
+      type: card.type,
+      location: "deck",
+      position: idx,
+      owner_id: null,
+    }));
+    this.players.forEach((player, playerIndex) => {
+      player.hand.forEach((card) => {
+        cards.push({
+          game_id: this.gameId,
+          value: card.value,
+          img: card.img,
+          color: card.color,
+          type: card.type,
+          location: "hand",
+          position: -1,
+          owner_id: player.id,
+        });
+      });
+    });
+
+    const dbState = { game, players, cards };
+    return dbState;
+  }
+
+  serializeOnlyGS(): GameStateDB {
+    const gs: {
+      game_id: string;
+      state: string;
+      turn: number;
+      turn_increment: number;
+      num_players: number;
+    } = {
+      game_id: this.gameId,
+      state: this.state,
+      turn: this.turn,
+      turn_increment: this.turnIncrement,
+      num_players: this.numPlayers,
+    };
+    return gs;
   }
 }
 

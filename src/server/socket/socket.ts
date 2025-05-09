@@ -11,12 +11,17 @@ export function initSocket(server: HttpServer) {
     console.log("error initializing socket");
   }
   io.on("connection", (socket) => {
-    const userId = socket.handshake.query.userId;
+    const userId = Number(socket.handshake.query.userId);
+    const gid = socket.handshake.query.gid;
+    if (!gid || typeof gid !== "string") {
+      console.log("error with gid undefined in socket connection");
+      return;
+    }
     console.log("user id: ", userId, " type is: ", typeof userId);
     if (!userId || Array.isArray(userId)) {
       console.log("issue with connection user id");
     } else {
-      gameManager.updateSocket(userId, socket.id);
+      gameManager.updateSocket(userId, socket.id, gid);
     }
     console.log(`User ${userId} connected on ${socket.id}`);
 
