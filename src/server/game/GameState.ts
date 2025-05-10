@@ -203,10 +203,18 @@ class GameState {
   }
 
   getPlayerSubset(playerId: number): PlayerGameState | null {
+    console.log("in player subset: ", typeof playerId);
+    console.log(
+      "in get player subset looking for ",
+      playerId,
+      " with players: ",
+      this.players,
+    );
     const playerIdx = this.players.findIndex(
       (player) => player.id === playerId,
     );
     if (playerIdx === null || playerIdx < 0) {
+      console.log("whopsie on found index? ", playerIdx);
       return null;
     }
 
@@ -214,6 +222,7 @@ class GameState {
     const playerArray = players
       .slice(playerIdx)
       .concat(players.slice(0, playerIdx));
+    console.log("got here at least");
 
     const newTurn =
       (this.turn - playerIdx + this.players.length) % this.players.length;

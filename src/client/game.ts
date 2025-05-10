@@ -32,18 +32,23 @@ var graphics_spec = {
 let socket = io({ query: { userId, gid } });
 socket.on("connect", () => {
   console.log(`connected with ${socket.id}`);
-  socket.emit("join-game", gid);
+  // socket.emit("join-game", gid);
   // socket.emit("game-state", gid, userId);
 });
 
 //for game room messages from server
 socket.on("start-game", (msg) => {
-  console.log("Message from room start notification :", msg);
+  console.log("Start game message received", msg);
   const wait = document.querySelector(".wait");
   if (wait) wait.remove();
 
   draw_decks_container();
-  socket.emit("game-state", gid, userId);
+  // socket.emit("game-state", gid, userId);
+  fetch("/api/game/state-update", {
+    method: "post",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ gid, userId }),
+  });
 });
 
 socket.on("state-update", (data) => {
@@ -51,10 +56,6 @@ socket.on("state-update", (data) => {
   console.log(gameState);
   console.log(JSON.stringify(gameState));
   // should be done on server now
-  // reorder players so that current player is p1 at index 0
-  // gameState.players = gameState?.players
-  //   .slice(gameState?.myPlayerIdx)
-  //   .concat(gameState?.players.slice(0, gameState?.myPlayerIdx));
   if (
     gameState?.gameState !== "uninitialized" &&
     data?.gameState !== "finished"

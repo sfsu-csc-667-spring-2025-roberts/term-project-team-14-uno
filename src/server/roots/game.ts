@@ -28,14 +28,14 @@ router.post("/join", async (req, res) => {
     res.status(401).json({ success: false, msg: "you are not logged in" });
     return;
   }
-  console.log("gm before: ", gameManager);
+  // console.log("gm before: ", gameManager);
   const gameId = gameManager.joinGame(Number(userId), username);
   if (!gameId) {
     res.status(500).json({ success: false, msg: "error joining a game" });
     return;
   }
-  console.log("gm after: ", gameManager);
-  console.log("now game state is: ", gameManager.games[gameId]);
+  // console.log("gm after: ", gameManager);
+  // console.log("now game state is: ", gameManager.games[gameId]);
 
   res.json({ success: true, gid: gameId, userId: userId });
 });
@@ -54,8 +54,10 @@ router.post("/play-card", (req, res) => {
   res.json({ success: true });
 });
 
-router.post("state-update", async (req, res) => {
-  const { gid, userId } = req.body;
+router.post("/state-update", async (req, res) => {
+  const { gid } = req.body;
+  const userId = Number(req.body.userId);
+
   if (!gid || !userId) {
     res.status(401).json({ success: false, msg: "error fetching state" });
   }
@@ -63,7 +65,9 @@ router.post("state-update", async (req, res) => {
   if (!socket) {
     res.status(401).json({ success: false, msg: "error fetching state" });
   }
+  console.log("fetching game state for: ", userId, " and gid: ", gid);
   const playerState = gameManager.games[gid].getPlayerSubset(userId);
+  console.log("player state from state update route: ", playerState);
   getIO().to(socket!).emit("state-update", playerState);
 });
 

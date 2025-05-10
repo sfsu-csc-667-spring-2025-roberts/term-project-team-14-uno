@@ -16,7 +16,7 @@ const addGameRecord = async (gs: GameStateDB) => {
 };
 
 const serializeInitialGame = async (state: GameDB) => {
-  console.log(state);
+  console.log("int serialize game");
   // add record to games table
 };
 // const login = async (email: string, password: string) => {
