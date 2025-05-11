@@ -2,7 +2,8 @@ import GameState from "./GameState";
 import { getIO } from "../socket/socket";
 import Sockets from "../db/socket/index";
 import Games from "../db/game/index";
-import { GameDB, GameStateDB } from "../db/game/GameDbType";
+import { CardDB, GameDB, GameStateDB, PlayerDB } from "../db/game/GameDbType";
+import { Socket } from "../db/socket/SocketType";
 
 interface GameMap {
   [gameId: string]: GameState;
@@ -33,6 +34,37 @@ class GameStore {
 
   static getGameId() {
     return ++this.id;
+  }
+
+  async init() {
+    const res = await Games.getGames();
+    let game_db: GameDB;
+    let g: GameStateDB;
+    let players: PlayerDB[];
+    let cards: CardDB[];
+    let sockets: Socket[];
+    let p: PlayerDB;
+    let gs: GameState;
+    for (let g of res) {
+      players = await Games.getPlayers(g.game_id);
+      cards = await Games.getCards(g.game_id);
+      game_db = { game: g, players: players, cards: cards };
+      gs = GameState.fromSQL(game_db);
+      this.games[g.game_id] = gs;
+      sockets = await Games.getSockets(g.game_id);
+
+      const socketMap = new Map<number, string>(); // user_id -> socket_id
+      sockets.forEach((s) => {
+        socketMap.set(s.user_id, s.socket_id);
+      });
+
+      players.forEach((player) => {
+        this.players[player.user_id.toString()] = {
+          socketId: socketMap.get(player.user_id) || null,
+          gameId: player.game_id,
+        };
+      });
+    }
   }
 
   joinGame(userId: number, username: string) {
@@ -82,6 +114,9 @@ class GameStore {
   updateSocket(userId: number, socketId: string, gameId: string) {
     console.log("player entry in game manager: ", this.players[userId]);
     console.log("update socket user: ", userId, " and socket: ", socketId);
+    if (!this.players[userId]) {
+      this.players[userId] = { socketId: null, gameId: gameId };
+    }
     this.players[userId].socketId = socketId;
     Sockets.updateSocket(socketId, userId, gameId);
   }

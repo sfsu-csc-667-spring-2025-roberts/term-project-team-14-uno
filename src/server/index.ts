@@ -32,6 +32,11 @@ app.use(express.static(path.join(process.cwd(), "public")));
 app.set("views", path.join(process.cwd(), "src", "server", "templates"));
 app.set("view engine", "ejs");
 
+// Sync in-memory state with DB
+(async () => {
+  await gameManager.init();
+})();
+
 app.use("/", rootRoutes);
 app.use("/api", apiRoutes);
 app.use("/test", testRoutes);
