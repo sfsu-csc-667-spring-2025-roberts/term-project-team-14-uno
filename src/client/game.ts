@@ -28,6 +28,8 @@ var graphics_spec = {
   },
 };
 
+let chat_log: { message: string; user: { userId: number } }[] = [];
+
 // sockets
 let socket = io({ query: { userId, gid } });
 socket.on("connect", () => {
@@ -72,6 +74,33 @@ socket.on("message", (msg) => {
   console.log("Message from room:", msg);
 });
 
+// chat handler
+socket.on("chat-message", ({ body, user }) => {
+  console.log(`chat message received ${user.id}: ${body}`);
+  const newChatMessage = { message: body, user: { userId: user.id } };
+  chat_log.push(newChatMessage);
+  const chatMsgContainer = document.querySelector(".chat__messages");
+  if (!chatMsgContainer) {
+    return;
+  }
+  const newMsgDiv = document.createElement("div");
+  newMsgDiv.classList.add("chat__msg");
+  const msgGrav = document.createElement("div");
+  msgGrav.classList.add("chat__gavitar");
+  const msgUser = document.createElement("span");
+  msgUser.classList.add("chat__msg-user");
+  msgUser.innerText = newChatMessage.user.userId;
+  const msgBody = document.createElement("span");
+  msgBody.classList.add("chat__msg-body");
+  msgBody.innerText = newChatMessage.message;
+
+  newMsgDiv.appendChild(msgGrav);
+  newMsgDiv.appendChild(msgUser);
+  newMsgDiv.appendChild(msgBody);
+
+  chatMsgContainer.appendChild(newMsgDiv);
+});
+
 socket.on("action-update", () => {
   fetch("/api/game/state-update", {
     method: "post",
@@ -90,6 +119,10 @@ const main = async () => {
   // draw_players(gameState)
   console.log("main fn");
   draw_waiting_indicator();
+  const chatSubmit = document.getElementById("chat-submit");
+  if (chatSubmit) {
+    chatSubmit.addEventListener("click", handleChatSubmit);
+  }
 };
 window.addEventListener("load", main);
 
@@ -535,4 +568,25 @@ function discard_pile(topCard: Card) {
   }
   div.appendChild(img);
   deck_div.appendChild(div);
+}
+
+function handleChatSubmit(e: Event) {
+  console.log("handle chat submit");
+  const input = document.getElementById("chat-post") as HTMLInputElement;
+  if (!input) {
+    console.log("no input");
+    return;
+  }
+  const message = input?.value;
+  if (!message) {
+    console.log("no message");
+    return;
+  }
+  console.log("gotten here");
+  input.value = "";
+  fetch("/api/chat/post", {
+    method: "post",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, gid, userId }),
+  });
 }

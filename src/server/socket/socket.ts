@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
 import gameManager from "../game/GameStore";
 import { Action } from "../game/GameState";
+import { middleware } from "../sessions/config";
 
 let io: Server | null = null;
 
@@ -10,7 +11,11 @@ export function initSocket(server: HttpServer) {
   if (io === null) {
     console.log("error initializing socket");
   }
+  io.engine.use(middleware);
   io.on("connection", (socket) => {
+    // @ts-ignore
+    // const { id, userId, username } = socket.request.session;
+    // console.log(`here is the id: ${id} and user: ${userId} from the session middleware`)
     const userId = Number(socket.handshake.query.userId);
     const gid = socket.handshake.query.gid;
     if (!gid || typeof gid !== "string") {

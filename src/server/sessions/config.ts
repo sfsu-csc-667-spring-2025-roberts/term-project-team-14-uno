@@ -21,4 +21,4 @@ const configureSession = (app: Express) => {
   return middleware;
 };
 
-export { configureSession };
+export { configureSession, middleware };

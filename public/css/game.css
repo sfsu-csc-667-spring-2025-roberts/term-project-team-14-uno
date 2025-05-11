@@ -19,6 +19,8 @@ html {
   width: 100vw;
   height: 100vh;
   background: radial-gradient(#016cb4, #001e3a);
+  display: grid;
+  grid-template-columns: 80% 20%;
 }
 
 .game-container {
@@ -147,4 +149,55 @@ html {
 
 .hidden {
   display: none;
+}
+
+.chat {
+  background-color: #fff;
+  display: grid;
+  grid-template-rows: 5% 85% 10%;
+  /* height: 100vh; */
+}
+
+.chat__header {
+  width: 100%;
+  padding: 0 0.5rem;
+  border-bottom: 1px gray solid;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chat__messages {
+  width: 100%;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+}
+
+.chat__post {
+  width: 100%;
+  border-top: 1px solid gray;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.chat__msg {
+  width: 100%;
+  margin: 2rem 0;
+  display: flex;
+  align-items: center;
+}
+.chat__gavitar {
+  height: 100%;
+  aspect-ratio: 100/100;
+  background-color: black;
+  border-radius: 50%;
+  margin: 0 0.5rem;
+}
+.chat__msg-user {
+  margin: 0 0.5rem;
+  text-decoration: underline;
+  cursor: pointer;
 }

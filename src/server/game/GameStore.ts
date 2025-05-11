@@ -114,6 +114,16 @@ class GameStore {
   updateSocket(userId: number, socketId: string, gameId: string) {
     console.log("player entry in game manager: ", this.players[userId]);
     console.log("update socket user: ", userId, " and socket: ", socketId);
+
+    const oldSocketId = this.players[userId]?.socketId;
+    if (oldSocketId && oldSocketId !== socketId) {
+      const oldSocket = getIO().sockets.sockets.get(oldSocketId);
+      if (oldSocket) {
+        console.log("Disconnecting old socket:", oldSocketId);
+        oldSocket.disconnect(true);
+      }
+    }
+
     if (!this.players[userId]) {
       this.players[userId] = { socketId: null, gameId: gameId };
     }
