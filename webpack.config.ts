@@ -15,6 +15,7 @@ const config: webpack.Configuration = {
     action: path.join(process.cwd(), "src", "client", "Action.ts"),
     card: path.join(process.cwd(), "src", "client", "Card.ts"),
     player: path.join(process.cwd(), "src", "client", "Player.ts"),
+    faq: path.join(process.cwd(), "src", "client", "faq.ts"),
     player_game_state: path.join(
       process.cwd(),
       "src",

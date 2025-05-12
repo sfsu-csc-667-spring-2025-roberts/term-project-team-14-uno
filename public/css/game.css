@@ -56,10 +56,6 @@ html {
   /* background-color: grey; */
 }
 
-.hidden {
-  display: hidden;
-}
-
 .select {
   position: absolute;
   height: 150px;

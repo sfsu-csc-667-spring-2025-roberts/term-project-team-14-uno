@@ -1,38 +1,52 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <!-- <style>
-      h1 {
-        text-align: center;
-      }
-    </style> -->
+    <link rel="stylesheet" href="/css/register.css">
   </head>
   <body>
-    <section class="login-section">
+    <nav>
+      <div class="logo">
+          <svg width="400" height="150" viewBox="0 0 400 150" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                  <!-- Gradient Fill -->
+                  <linearGradient id="unoFill" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#FF0000" />
+                      <stop offset="100%" stop-color="#FFD700" />
+                  </linearGradient>
+
+                  <!-- Black outline -->
+                  <filter id="outline">
+                      <feMorphology in="SourceAlpha" result="DILATED" operator="dilate" radius="3" />
+                      <feFlood flood-color="black" result="BLACK" />
+                      <feComposite in="BLACK" in2="DILATED" operator="in" result="OUTLINE" />
+                      <feMerge>
+                          <feMergeNode in="OUTLINE" />
+                          <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                  </filter>
+              </defs>
+
+              <!-- UNO Letters -->
+              <text x="20" y="110" font-family="'Arial Black', sans-serif" font-size="100" font-style="italic"
+                  fill="url(#unoFill)" filter="url(#outline)">
+                  UNO
+              </text>
+          </svg>
+      </div>
+  </nav>
+  <div class="container">
       <h1>Login</h1>
       <form method="POST" action="/api/auth/login">
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            placeholder="you@domain.com"
-            required
-          />
-        </div>
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Enter your password"
-            required
-          />
-        </div>
-        <button type="submit" class="btn-primary">Login</button>
+          <div>
+              <label for="email">Email</label>
+              <input type="email" name="email" id="email" required>
+          </div>
+          <div>
+              <label for="password">Password</label>
+              <input type="password" name="password" id="password" required>
+          </div>
+          <button type="submit">Register</button>
       </form>
-    </section>
+  </div>
   </body>
 </html>

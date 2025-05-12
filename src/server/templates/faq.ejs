@@ -1,11 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>FAQ</title>
-  <link rel="stylesheet" href="/css/game.css" />
+  <style>
+    :root {
+      --scaling-factor: 0.5;
+      --deck-width: 250px;
+      --deck-height: 200px;
+    }
+
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+  </style>
   <script src="/js/faq.js" defer></script>
 </head>
+
 <body>
   <section class="faq-section">
     <h1>Frequently Asked Questions</h1>
@@ -18,31 +36,31 @@
     <div class="faq-item">
       <button class="faq-question">What do the wild cards do?</button>
       <div class="faq-answer">The regular wild card allows you to choose a color, while the +4
-       allows the change of color along with the next player in turn drawing 4 cards.</div>
+        allows the change of color along with the next player in turn drawing 4 cards.</div>
     </div>
 
     <div class="faq-item">
-        <button class="faq-question">What if I dont call out UNO?</button>
-        <div class="faq-answer">If someone calls you out on it, draw 4 cards, but 
+      <button class="faq-question">What if I dont call out UNO?</button>
+      <div class="faq-answer">If someone calls you out on it, draw 4 cards, but
         if no one notices, then you're good...</div>
     </div>
 
     <div class="faq-item">
-        <button class="faq-question">Can you reverse a +2?</button>
-        <div class="faq-answer">In the official rules, no.</div>
+      <button class="faq-question">Can you reverse a +2?</button>
+      <div class="faq-answer">In the official rules, no.</div>
     </div>
 
     <div class="faq-item">
-        <button class="faq-question">Can cards stack? For example, +2 then +2? Etc. </button>
-        <div class="faq-answer">No cards can stack. Not even +4s.</div>
+      <button class="faq-question">Can cards stack? For example, +2 then +2? Etc. </button>
+      <div class="faq-answer">No cards can stack. Not even +4s.</div>
     </div>
 
     <div class="faq-item">
-        <button class="faq-question">Where can I find the official rules? </button>
-        <div class="faq-answer">Go to https://www.unorules.org/faq/ </div>
+      <button class="faq-question">Where can I find the official rules? </button>
+      <div class="faq-answer">Go to https://www.unorules.org/faq/ </div>
     </div>
 
   </section>
 </body>
-</html>
 
+</html>
