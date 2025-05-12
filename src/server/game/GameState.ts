@@ -260,6 +260,7 @@ class GameState {
       user_id: player.id,
       username: player.username,
     }));
+    console.log("player count from serialization: ", players.length);
 
     const cards: {
       game_id: string;

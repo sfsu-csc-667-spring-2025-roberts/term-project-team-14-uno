@@ -1,7 +1,59 @@
-console.log("hello world");
 const username = generateRandomId();
-document.querySelector(".start")!.addEventListener("click", async () => {
-  const res = await fetch("/api/game/join", {
+export interface GameStateDB {
+  game_id: string;
+  state: string;
+  turn: number;
+  turn_increment: number;
+  num_players: number;
+  top_card_id: null | string;
+}
+document.addEventListener("DOMContentLoaded", async () => {
+  const container = document.querySelector(".join-game");
+  if (!container) {
+    return;
+  }
+  const res = await fetch("/api/game/open-games");
+  const resJson = await res.json();
+  console.log(resJson);
+
+  for (let game of resJson as GameStateDB[]) {
+    const card = document.createElement("div");
+    card.classList.add("game-card");
+
+    card.innerHTML = `
+      <div class="game-info">
+        <p><strong>Game ID:</strong> ${game.game_id}</p>
+        <p><strong>Players:</strong> ${game.num_players}</p>
+        <p><strong>State:</strong> ${game.state}</p>
+        <p><strong>Turn:</strong> ${game.turn}</p>
+      </div>
+      <button class="join-button" data-game-id="${game.game_id}">Join Game</button>
+    `;
+
+    container.appendChild(card);
+  }
+
+  container.addEventListener("click", async (e) => {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains("join-button")) {
+      const gameId = target.dataset.gameId;
+      console.log(`Joining game ${gameId}`);
+      const res = await fetch("/api/game/join-game", {
+        method: "post",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, gid: gameId }),
+      });
+      const resJson = await res.json();
+      if (!resJson.success) {
+        console.log("error");
+      }
+      window.location.href = `/game?gid=${resJson.gid}&pid=${resJson.userId}`;
+    }
+  });
+});
+
+document.querySelector(".start-btn")!.addEventListener("click", async () => {
+  const res = await fetch("/api/game/new-game", {
     method: "post",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username }),

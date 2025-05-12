@@ -38,6 +38,14 @@ class GameStore {
 
   async init() {
     const res = await Games.getGames();
+    //make sure no conflict with new game ids
+    const maxId = res.reduce((max, game) => {
+      const numId = parseInt(game.game_id, 10);
+      return isNaN(numId) ? max : Math.max(max, numId);
+    }, 0);
+
+    GameStore.id = maxId + 1;
+
     let game_db: GameDB;
     let g: GameStateDB;
     let players: PlayerDB[];
@@ -65,6 +73,16 @@ class GameStore {
         };
       });
     }
+  }
+
+  newGame(userId: number, username: string) {
+    const gs = new GameState(String(GameStore.getGameId()));
+    gs.addPlayer(userId, username);
+    this.games[gs.gameId] = gs;
+    this.players[userId] = { socketId: null, gameId: gs.gameId };
+    // return {gameId: gs.gameId, startGame: false}; // maybe update if we allow single player
+    Games.addGameRecord(gs.serializeOnlyGS());
+    return gs.gameId;
   }
 
   joinGame(userId: number, username: string) {
@@ -109,6 +127,22 @@ class GameStore {
     this.players[userId] = { socketId: null, gameId: gs.gameId };
     Games.addGameRecord(gs.serializeOnlyGS());
     return gs.gameId;
+  }
+
+  joinSpecificGame(userId: number, username: string, gid: string) {
+    const game = this.games[gid];
+    if (!game) {
+      console.log("unable to find specific game");
+      return false;
+    }
+    this.games[gid].addPlayer(userId, username);
+    this.players[userId] = { socketId: null, gameId: gid };
+    return true;
+  }
+
+  getOpenGames() {
+    const games = Games.getOpenGames();
+    return games;
   }
 
   updateSocket(userId: number, socketId: string, gameId: string) {

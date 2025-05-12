@@ -6,35 +6,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome</title>
 </head>
-<style>
-    h1 {
-        text-align: center;
-
-    }
-
-    .container {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-
-    .card {
-        width: calc(250px);
-        height: calc(380px);
-    }
-
-    img {
-        width: 100%;
-    }
-</style>
+<link rel="stylesheet" href="/css/lobby.css">
 
 <body>
-    <h1>Uno: team 14!</h1>
+    <nav>
+        <div class="logo">
+            <svg width="400" height="150" viewBox="0 0 400 150" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <!-- Gradient Fill -->
+                    <linearGradient id="unoFill" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#FF0000" />
+                        <stop offset="100%" stop-color="#FFD700" />
+                    </linearGradient>
+  
+                    <!-- Black outline -->
+                    <filter id="outline">
+                        <feMorphology in="SourceAlpha" result="DILATED" operator="dilate" radius="3" />
+                        <feFlood flood-color="black" result="BLACK" />
+                        <feComposite in="BLACK" in2="DILATED" operator="in" result="OUTLINE" />
+                        <feMerge>
+                            <feMergeNode in="OUTLINE" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                </defs>
+  
+                <!-- UNO Letters -->
+                <text x="20" y="110" font-family="'Arial Black', sans-serif" font-size="100" font-style="italic"
+                    fill="url(#unoFill)" filter="url(#outline)">
+                    UNO
+                </text>
+            </svg>
+        </div>
+        <ul>
+            <li><a href="/faq">FAQ</a></li>
+        </ul>
+    </nav>
+    <h1>Welcome to the Uno Lobby!</h1>
     <div class="container">
-        <div class="card">
+        <!-- <div class="card">
             <img src="/card_img/card_back.svg" alt="">
         </div>
-        <button class="start">Start Game!</button>
+        <button class="start">Start Game!</button> -->
+        <div class="start-game">
+            <div class="header-container"><h2>Start New Game</h2></div>
+            <p>start your own Uno game. Click start to enter a brand new game, other players will eventually join!</p>
+            <button class="start-btn">Start Game</button>
+        </div>
+        <div class="join-game">
+            <div class="header-container"><h2>Join a Waiting Game</h2></div>
+        </div>
     </div>
     <script src="/js/lobby.js"></script>
 </body>

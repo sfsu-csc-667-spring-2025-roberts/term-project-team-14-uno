@@ -105,6 +105,18 @@ const getSockets = async (gid: string): Promise<Socket[]> => {
   }
 };
 
+const getOpenGames = async (): Promise<GameStateDB[]> => {
+  const query = "SELECT * FROM games WHERE state='uninitialized'";
+  try {
+    const res = await db.any(query);
+    console.log("games db: ", res);
+    return res;
+  } catch (error) {
+    console.log("error fetching open games: ", error);
+    return [];
+  }
+};
+
 export default {
   addGameRecord,
   serializeInitialGame,
@@ -112,4 +124,5 @@ export default {
   getPlayers,
   getCards,
   getSockets,
+  getOpenGames,
 };

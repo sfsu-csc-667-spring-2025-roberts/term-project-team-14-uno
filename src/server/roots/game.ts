@@ -8,10 +8,59 @@ import User from "../db/user/index";
 
 const router = express.Router();
 
-//maybe get is better
-// router.get("/join", async (req, res) => {
+router.post("/new-game", async (req, res) => {
+  // // @ts-ignore
+  // const userId = req.session.userId
+  // // @ts-ignore
+  // const username = req.session.username
+  const username = "hellomiles";
+  const userId = await User.register(username, "12345");
+  if (!userId || typeof userId !== "number") {
+    res.status(500).json({ success: false, msg: "you are not logged in" });
+    return;
+  }
+  if (!userId || !username) {
+    res.status(401).json({ success: false, msg: "you are not logged in" });
+    return;
+  }
 
-// })
+  const gameId = gameManager.newGame(Number(userId), username);
+  if (!gameId) {
+    res.status(500).json({ success: false, msg: "error joining a game" });
+    return;
+  }
+
+  res.json({ success: true, gid: gameId, userId: userId });
+});
+
+router.post("/join-game", async (req, res) => {
+  const { username, gid } = req.body;
+  // temporarily create user
+  const userId = await User.register(username, "12345");
+  if (!userId || typeof userId !== "number") {
+    res.status(500).json({ success: false, msg: "you are not logged in" });
+    return;
+  }
+  // // @ts-ignore
+  // const userId = req.session.userId
+  // // @ts-ignore
+  // const username = req.session.username
+  if (!userId || !username || !gid) {
+    res.status(401).json({ success: false, msg: "you are not logged in" });
+    return;
+  }
+  // console.log("gm before: ", gameManager);
+  const gameId = gameManager.joinSpecificGame(Number(userId), username, gid);
+  if (!gameId) {
+    res.status(500).json({ success: false, msg: "error joining a game" });
+    return;
+  }
+  // console.log("gm after: ", gameManager);
+  // console.log("now game state is: ", gameManager.games[gameId]);
+
+  res.json({ success: true, gid, userId: userId });
+});
+
 router.post("/join", async (req, res) => {
   const { username } = req.body;
   // temporarily create user
@@ -69,6 +118,15 @@ router.post("/state-update", async (req, res) => {
   const playerState = gameManager.games[gid].getPlayerSubset(userId);
   console.log("player state from state update route: ", playerState);
   getIO().to(socket!).emit("state-update", playerState);
+});
+
+router.get("/open-games", async (req, res) => {
+  try {
+    const games = await gameManager.getOpenGames();
+    res.status(200).json(games);
+  } catch (error) {
+    console.log("error in api route get open games: ", error);
+  }
 });
 
 export default router;
