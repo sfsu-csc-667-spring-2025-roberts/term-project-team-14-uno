@@ -33,10 +33,17 @@ export function initSocket(server: HttpServer) {
     socket.join(gid);
     io!.to(gid).emit("message", `User ${socket.id} has joined the room`);
     if (
-      gameManager.games[gid].state === "ready" ||
-      gameManager.games[gid].state === "wait"
+      gameManager.games[gid]?.state === "ready" ||
+      gameManager.games[gid]?.state === "wait"
     ) {
       io!.to(gid).emit("start-game", "start");
+    } else if (!gameManager.games[gid]) {
+      console.log(
+        "what not defined? gm at gid: ",
+        gid,
+        " equal to ",
+        gameManager.games[gid],
+      );
     }
 
     socket.on("game-state", (gid, userId) => {
