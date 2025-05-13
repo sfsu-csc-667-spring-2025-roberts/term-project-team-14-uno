@@ -1,5 +1,7 @@
 import Card from "../../../client/Card";
+import GameState from "../../game/GameState";
 import db from "../connection";
+import { pgp } from "../connection";
 import { Socket } from "../socket/SocketType";
 import { CardDB, GameDB, GameStateDB, PlayerDB } from "./GameDbType";
 
@@ -17,9 +19,110 @@ const addGameRecord = async (gs: GameStateDB) => {
   }
 };
 
-const serializeInitialGame = async (state: GameDB) => {
-  console.log("int serialize game");
+const serializeGame = async (state: GameDB) => {
+  console.log("in serialize game");
+  // quickCheckHelperInit(state)
   // add record to games table
+  const gameStateUpdate = await serializeGameStateHelper(state.game);
+  if (!gameStateUpdate) return;
+  const cardStateUpdate = await cardsStateUpdateHelper(state.cards);
+  const playersStateUpdate = await playersStateUpdateHelper(state.players);
+  if (gameStateUpdate && cardStateUpdate && playersStateUpdate) {
+    console.log("YAY!! successfully serialized game no errors");
+  }
+  return true;
+};
+const serializeGameStateHelper = async (game: GameStateDB) => {
+  const query = `
+    INSERT INTO games (
+      game_id, state, turn, turn_increment, num_players, top_card_id
+    )
+    VALUES (
+      $[game_id], $[state], $[turn], $[turn_increment], $[num_players], $[top_card_id]::uuid
+    )
+    ON CONFLICT (game_id)
+    DO UPDATE SET
+      state = EXCLUDED.state,
+      turn = EXCLUDED.turn,
+      turn_increment = EXCLUDED.turn_increment,
+      num_players = EXCLUDED.num_players,
+      top_card_id = EXCLUDED.top_card_id
+  `;
+  try {
+    await db.none(query, game);
+    console.log(`Game ${game.game_id} upserted successfully.`);
+    return true;
+  } catch (error) {
+    console.error(`Failed to upsert game ${game.game_id}:`, error);
+    return false;
+  }
+};
+
+const cardColumnSet = new pgp.helpers.ColumnSet(
+  [
+    "id",
+    "game_id",
+    "value",
+    "img",
+    "color",
+    "type",
+    "location",
+    "position",
+    "owner_id",
+  ],
+  { table: "game_cards" },
+);
+const cardsStateUpdateHelper = async (cards: CardDB[]) => {
+  const insert =
+    pgp.helpers.insert(cards, cardColumnSet) +
+    `
+    ON CONFLICT (id)
+    DO UPDATE SET
+      game_id = EXCLUDED.game_id,
+      value = EXCLUDED.value,
+      img = EXCLUDED.img,
+      color = EXCLUDED.color,
+      type = EXCLUDED.type,
+      location = EXCLUDED.location,
+      position = EXCLUDED.position,
+      owner_id = EXCLUDED.owner_id
+  `;
+
+  try {
+    await db.none(insert);
+    console.log(`Upserted ${cards.length} cards.`);
+    return true;
+  } catch (error) {
+    console.error("Error during bulk card upsert:", error);
+    return false;
+  }
+};
+const playerColumnSet = new pgp.helpers.ColumnSet(
+  ["id", "game_id", "player_index", "user_id"],
+  { table: "players" },
+);
+const playersStateUpdateHelper = async (players: PlayerDB[]) => {
+  // Omit the `username` field before insert
+  const dbReadyPlayers = players.map(({ username, ...p }) => p);
+
+  const insert =
+    pgp.helpers.insert(dbReadyPlayers, playerColumnSet) +
+    `
+    ON CONFLICT (id)
+    DO UPDATE SET
+      game_id = EXCLUDED.game_id,
+      player_index = EXCLUDED.player_index,
+      user_id = EXCLUDED.user_id
+  `;
+
+  try {
+    await db.none(insert);
+    console.log(`Upserted ${players.length} players.`);
+    return true;
+  } catch (error) {
+    console.error("Error during bulk player upsert:", error);
+    return false;
+  }
 };
 
 const getGames = async (): Promise<GameStateDB[]> => {
@@ -45,6 +148,7 @@ const getCards = async (gid: string): Promise<CardDB[]> => {
     const res = await db.any(query);
     console.log("cards db: ", res);
     const cards = res.map((card) => ({
+      id: card.id,
       game_id: card.game_id,
       value: card.value,
       color: card.color,
@@ -76,7 +180,8 @@ const getPlayers = async (gid: string): Promise<PlayerDB[]> => {
       game_id: gid,
       player_index: Number(player.player_index),
       user_id: Number(player.user_id),
-      username: player.username,
+      id: player.uuid,
+      username: player.email,
     }));
     return players;
   } catch (error) {
@@ -117,9 +222,30 @@ const getOpenGames = async (): Promise<GameStateDB[]> => {
   }
 };
 
+const quickCheckHelperInit = (gameState: GameDB) => {
+  console.log("***HELPER CHECK***");
+  const game = gameState.game;
+  console.log("game state: ", game);
+  const cards = gameState.cards;
+  console.log(
+    "deck cards: ",
+    cards.filter((card) => card.location === "deck").length,
+  );
+  console.log(
+    "player cards: ",
+    cards.filter((card) => card.location === "hand").length,
+  );
+  const players = gameState.players;
+  console.log("players num: ", players.length);
+  console.log(
+    "players id: ",
+    players.map((player) => player.user_id),
+  );
+};
+
 export default {
   addGameRecord,
-  serializeInitialGame,
+  serializeGame,
   getGames,
   getPlayers,
   getCards,

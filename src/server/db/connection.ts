@@ -1,5 +1,9 @@
-import pgp from "pg-promise";
+import pgPromise from "pg-promise";
 
-const connection = pgp()(process.env.DATABASE_URL!);
+const pgp = pgPromise();
+
+const connection = pgp(process.env.DATABASE_URL!);
 
 export default connection;
+
+export { pgp };

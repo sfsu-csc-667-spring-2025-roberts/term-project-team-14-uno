@@ -14,6 +14,7 @@ export interface GameStateDB {
 }
 
 export interface CardDB {
+  id: string;
   game_id: string;
   value: number;
   color: string;
@@ -28,5 +29,6 @@ export interface PlayerDB {
   game_id: string;
   player_index: number;
   user_id: number;
+  id: string;
   username: string | null;
 }

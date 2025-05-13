@@ -28,6 +28,7 @@ export interface PlayerGameState {
 class GameState {
   gameId: string;
   deck: Card[];
+  discard: Card[];
   players: Player[];
   turn: number;
   turnIncrement: number;
@@ -46,6 +47,7 @@ class GameState {
           CardType[card.type as keyof typeof CardType],
         ),
     );
+    this.discard = [];
     this.players = [];
     this.turn = 0;
     this.turnIncrement = -1;
@@ -67,7 +69,7 @@ class GameState {
     // remove distributed from deck
     this.deck.splice(0, this.numPlayers * 7);
     this.state = "wait";
-    Game.serializeInitialGame(this.serializeToSQL());
+    Game.serializeGame(this.serializeToSQL());
   }
 
   update(action: Action) {
@@ -158,15 +160,6 @@ class GameState {
     // do stuff
   }
 
-  /*
-    these are all the app management methods. Not directly related to the management of game flow
-  **/
-  // addPlayer(id: string) {
-  //   this.players.push(new Player(this.players.length, id, this.players.length));
-  //   if (this.players.length === this.numPlayers) {
-  //     this.init();
-  //   }
-  // }
   addPlayer(id: number, username: string | null) {
     this.players.push(new Player(id, username, this.players.length));
     if (this.players.length === this.numPlayers) {
@@ -178,7 +171,7 @@ class GameState {
     // socket message to player
     const player = this.players[index];
     // call game manager, send message
-    const playerSocket = gameManager.players[player.id].socketId;
+    const playerSocket = gameManager.players[player.userId].socketId;
     if (!playerSocket) {
       return false;
     }
@@ -187,7 +180,7 @@ class GameState {
   }
   messagePlayerId(id: number) {
     // socket message to player
-    const player = this.players.findIndex((player) => player.id === id);
+    const player = this.players.findIndex((player) => player.userId === id);
     // call game manager, send message
   }
 
@@ -196,22 +189,17 @@ class GameState {
     for (let i = 0; i < this.numPlayers; i++) {
       this.messagePlayer(
         i,
-        this.getPlayerSubset(this.players[i].id),
+        this.getPlayerSubset(this.players[i].userId),
         "state-update",
       );
     }
   }
 
   getPlayerSubset(playerId: number): PlayerGameState | null {
-    console.log("in player subset: ", typeof playerId);
-    console.log(
-      "in get player subset looking for ",
-      playerId,
-      " with players: ",
-      this.players,
-    );
+    console.log("in player subset: ", playerId);
+
     const playerIdx = this.players.findIndex(
-      (player) => player.id === playerId,
+      (player) => player.userId === playerId,
     );
     if (playerIdx === null || playerIdx < 0) {
       console.log("whopsie on found index? ", playerIdx);
@@ -222,16 +210,10 @@ class GameState {
     const playerArray = players
       .slice(playerIdx)
       .concat(players.slice(0, playerIdx));
-    console.log("got here at least");
 
     const newTurn =
       (this.turn - playerIdx + this.players.length) % this.players.length;
-    console.log(
-      "in get player subset with idx: ",
-      playerIdx,
-      " side note top card is: ",
-      this.topCard,
-    );
+
     return {
       gameState: this.state,
       topCard: this.topCard, // null first turn
@@ -249,7 +231,7 @@ class GameState {
       turn: this.turn,
       turn_increment: this.turnIncrement,
       num_players: this.numPlayers,
-      top_card_id: null,
+      top_card_id: this.topCard ? this.topCard.id : null,
     };
     if (this.state === "uninitialized") {
       return { game, cards: [], players: [] };
@@ -257,12 +239,14 @@ class GameState {
     const players = this.players.map((player) => ({
       game_id: this.gameId,
       player_index: player.index,
-      user_id: player.id,
+      user_id: player.userId,
+      id: player.uuid,
       username: player.username,
     }));
     console.log("player count from serialization: ", players.length);
 
     const cards: {
+      id: string;
       game_id: string;
       value: number;
       img: string;
@@ -272,6 +256,7 @@ class GameState {
       position: number | null;
       owner_id: number | null;
     }[] = this.deck.map((card, idx) => ({
+      id: card.id,
       game_id: this.gameId,
       value: card.value,
       img: card.img,
@@ -284,6 +269,7 @@ class GameState {
     this.players.forEach((player, playerIndex) => {
       player.hand.forEach((card) => {
         cards.push({
+          id: card.id,
           game_id: this.gameId,
           value: card.value,
           img: card.img,
@@ -291,10 +277,23 @@ class GameState {
           type: card.type,
           location: "hand",
           position: -1,
-          owner_id: player.id,
+          owner_id: player.userId,
         });
       });
     });
+    this.discard
+      .map((dCard) => ({
+        id: dCard.id,
+        game_id: this.gameId,
+        value: dCard.value,
+        img: dCard.img,
+        color: dCard.color,
+        type: dCard.type,
+        location: "discard",
+        position: -1,
+        owner_id: null,
+      }))
+      .forEach((card) => cards.push(card));
 
     const dbState = { game, players, cards };
     return dbState;
@@ -350,7 +349,7 @@ class GameState {
     );
 
     handCards.forEach((card) => {
-      const player = gs.players.find((p) => p.id === card.owner_id);
+      const player = gs.players.find((p) => p.userId === card.owner_id);
       if (!player) return;
       player.hand.push(
         new Card(

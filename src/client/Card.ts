@@ -1,10 +1,14 @@
+import { v4 as uuidv4 } from "uuid";
+
 class Card {
+  id: string;
   value: number;
   img: string;
   color: Color;
   type: CardType;
 
   constructor(value: number, img: string, color: Color, type: CardType) {
+    this.id = uuidv4();
     this.value = value;
     this.img = img;
     this.color = color;

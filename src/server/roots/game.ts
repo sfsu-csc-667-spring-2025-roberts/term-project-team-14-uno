@@ -116,7 +116,7 @@ router.post("/state-update", async (req, res) => {
   }
   console.log("fetching game state for: ", userId, " and gid: ", gid);
   const playerState = gameManager.games[gid].getPlayerSubset(userId);
-  console.log("player state from state update route: ", playerState);
+  // console.log("player state from state update route: ", playerState);
   getIO().to(socket!).emit("state-update", playerState);
 });
 
