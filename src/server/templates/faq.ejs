@@ -15,13 +15,65 @@
     html {
       margin: 0;
       padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      color: #000;
     }
 
     * {
       box-sizing: border-box;
     }
+
+    .faq-section {
+      max-width: 700px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .faq-item {
+      margin-bottom: 15px;
+    }
+
+    .faq-question {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      text-align: left;
+      background-color: #ccc;
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .faq-question:hover {
+      background-color: #999;
+    }
+
+    .faq-answer {
+      display: none;
+      padding: 12px;
+      background-color: #eee;
+      border-radius: 4px;
+      margin-top: 6px;
+    }
   </style>
-  <script src="/js/faq.js" defer></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const questions = document.querySelectorAll(".faq-question");
+      questions.forEach(button => {
+        button.addEventListener("click", () => {
+          const answer = button.nextElementSibling;
+          answer.style.display = answer.style.display === "block" ? "none" : "block";
+        });
+      });
+    });
+  </script>
 </head>
 
 <body>
@@ -35,14 +87,12 @@
 
     <div class="faq-item">
       <button class="faq-question">What do the wild cards do?</button>
-      <div class="faq-answer">The regular wild card allows you to choose a color, while the +4
-        allows the change of color along with the next player in turn drawing 4 cards.</div>
+      <div class="faq-answer">The regular wild card allows you to choose a color, while the +4 allows the change of color along with the next player in turn drawing 4 cards.</div>
     </div>
 
     <div class="faq-item">
       <button class="faq-question">What if I dont call out UNO?</button>
-      <div class="faq-answer">If someone calls you out on it, draw 4 cards, but
-        if no one notices, then you're good...</div>
+      <div class="faq-answer">If someone calls you out on it, draw 4 cards, but if no one notices, then you're good...</div>
     </div>
 
     <div class="faq-item">
@@ -57,7 +107,7 @@
 
     <div class="faq-item">
       <button class="faq-question">Where can I find the official rules? </button>
-      <div class="faq-answer">Go to https://www.unorules.org/faq/ </div>
+      <div class="faq-answer"><a href="https://www.unorules.org/faq/" target="_blank">https://www.unorules.org/faq/</a></div>
     </div>
 
   </section>
