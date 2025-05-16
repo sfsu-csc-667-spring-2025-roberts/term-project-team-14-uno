@@ -30,6 +30,8 @@ var graphics_spec = {
 
 let chat_log: { message: string; user: { userId: number } }[] = [];
 
+let draw_el_disabled = false;
+
 // sockets
 let socket = io({ query: { userId, gid } });
 socket.on("connect", () => {
@@ -537,6 +539,7 @@ function draw_pile() {
   let img = document.createElement("img");
   img.setAttribute("src", "card_img/card_back.svg");
   div.appendChild(img);
+  div.addEventListener("click", mainPlayerDraw);
   deck_div.appendChild(div);
 }
 function discard_pile(topCard: Card) {
@@ -589,4 +592,55 @@ function handleChatSubmit(e: Event) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message, gid, userId }),
   });
+}
+
+function mainPlayerDraw() {
+  if (draw_el_disabled) {
+    return;
+  }
+  if (!userId || !gid) {
+    return;
+  }
+  let action: Action = {
+    type: "draw",
+    playerId: userId,
+    gameId: gid,
+  };
+  // fetch()
+  animateCard(0);
+}
+
+function animateCard(playerIndex: number) {
+  const lastPlayerHandCard = document.querySelector(`.player.p${playerIndex}`)
+    ?.lastElementChild as HTMLElement;
+  const draw = document.querySelector(`draw`) as HTMLElement;
+  if (!lastPlayerHandCard || !draw) return;
+
+  const rect = draw.getBoundingClientRect();
+  const w_card: number = rect.width;
+  const h_card: number = rect.height;
+  const abs_container = document.querySelector(".layout")!;
+  const abs_card = document.createElement("div");
+  abs_card.classList.add("card");
+  abs_card.style.width = w_card + "px";
+  abs_card.style.height = h_card + "px";
+
+  const abs_img = document.createElement("img");
+  abs_img.setAttribute("src", "card_img/card_back.svg");
+  abs_card.appendChild(abs_img);
+  abs_card.style.position = "absolute";
+  abs_card.style.left = `${rect.left + window.scrollX}px`;
+  abs_card.style.top = `${rect.top + window.scrollY}px`;
+  abs_card.style.transition = "all 0.75s ease-in-out";
+  abs_container.appendChild(abs_card);
+
+  setTimeout(() => {
+    const newRect = lastPlayerHandCard.getBoundingClientRect();
+    abs_card.style.left = `${newRect.left + window.scrollX}px`;
+    abs_card.style.top = `${newRect.top + window.scrollY}px`;
+
+    abs_card.addEventListener("transitionend", () => {
+      abs_card.remove();
+    });
+  }, 50);
 }

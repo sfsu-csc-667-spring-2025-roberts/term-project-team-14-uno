@@ -25,8 +25,9 @@ const serializeGame = async (state: GameDB) => {
   // add record to games table
   const gameStateUpdate = await serializeGameStateHelper(state.game);
   if (!gameStateUpdate) return;
-  const cardStateUpdate = await cardsStateUpdateHelper(state.cards);
+  // players must go before cards to ref user_id from players table
   const playersStateUpdate = await playersStateUpdateHelper(state.players);
+  const cardStateUpdate = await cardsStateUpdateHelper(state.cards);
   if (gameStateUpdate && cardStateUpdate && playersStateUpdate) {
     console.log("YAY!! successfully serialized game no errors");
   }
@@ -139,6 +140,31 @@ const getGames = async (): Promise<GameStateDB[]> => {
     return [];
   }
 };
+const updateGame = async (state: GameStateDB): Promise<boolean> => {
+  const query = `
+    UPDATE games SET
+      state = $2,   
+      turn = $3,   
+      turn_increment = $4,
+      top_card_id = $5
+      WHERE game_id = $1
+  `;
+  const values = [
+    state.game_id,
+    state.state,
+    state.turn,
+    state.turn_increment,
+    state.top_card_id,
+  ];
+  try {
+    const res = await db.none(query, values);
+    console.log("games db: ", res);
+    return true;
+  } catch (error) {
+    console.log("error updating games table in game state: ", error);
+    return false;
+  }
+};
 
 const getCards = async (gid: string): Promise<CardDB[]> => {
   const query = `
@@ -163,6 +189,75 @@ const getCards = async (gid: string): Promise<CardDB[]> => {
   } catch (error) {
     console.log("error fetching cards from db: ", error);
     return [];
+  }
+};
+
+const updateCard = async (card: CardDB): Promise<boolean> => {
+  const query = `
+    UPDATE game_cards SET
+      game_id = $2,
+      value = $3,
+      color = $4,
+      type = $5,
+      img = $6,
+      location = $7,
+      owner_id = $8,
+      position = $9
+    WHERE id = $1
+  `;
+
+  const values = [
+    card.id,
+    card.game_id,
+    card.value,
+    card.color,
+    card.type,
+    card.img,
+    card.location,
+    card.owner_id,
+    card.position,
+  ];
+
+  try {
+    await db.none(query, values);
+    console.log(`Updated card with id ${card.id}`);
+    return true;
+  } catch (err) {
+    console.error("Error during card update:", err);
+    return false;
+  }
+};
+const getNextDrawCard = async (gameId: string): Promise<CardDB | null> => {
+  const query = `SELECT *
+FROM game_cards
+WHERE game_id = $1
+  AND location = 'deck'
+  AND position = (
+    SELECT MIN(position)
+    FROM game_cards
+    WHERE game_id = $1
+      AND location = 'deck'
+  );`;
+  try {
+    const card = await db.oneOrNone(query, [gameId]);
+    if (!card) {
+      console.log("no more deck cards");
+      return null;
+    }
+    return {
+      id: card.id,
+      game_id: card.game_id,
+      value: card.value,
+      color: card.color,
+      type: card.type,
+      img: card.img,
+      location: card.location,
+      owner_id: Number(card.owner_id),
+      position: Number(card.position),
+    };
+  } catch (error) {
+    console.log("error fetching next card to draw db: ", error);
+    return null;
   }
 };
 
@@ -247,8 +342,11 @@ export default {
   addGameRecord,
   serializeGame,
   getGames,
+  updateGame,
   getPlayers,
   getCards,
+  updateCard,
+  getNextDrawCard,
   getSockets,
   getOpenGames,
 };

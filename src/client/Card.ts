@@ -1,5 +1,17 @@
 import { v4 as uuidv4 } from "uuid";
 
+export interface CardDB {
+  id: string;
+  game_id: string;
+  value: number;
+  color: string;
+  type: string;
+  img: string;
+  location: string;
+  owner_id: number | null;
+  position: number | null;
+}
+
 class Card {
   id: string;
   value: number;
@@ -14,6 +26,21 @@ class Card {
     this.color = color;
     this.type = type;
   }
+
+  toCardDB(): CardDB {
+    return {
+      id: this.id,
+      game_id: "-1",
+      value: this.value,
+      color: this.color,
+      type: this.type,
+      img: this.img,
+      location: "-1",
+      owner_id: -1,
+      position: -1,
+    };
+  }
+
   equals(other: Card): boolean {
     return (
       this.value === other.value &&

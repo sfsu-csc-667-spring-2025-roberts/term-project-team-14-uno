@@ -4,7 +4,7 @@ import deck from "./Deck";
 import Player from "../../client/Player";
 import gameManager from "./GameStore";
 import { getIO } from "../socket/socket";
-import { GameDB, GameStateDB } from "../db/game/GameDbType";
+import { CardDB, GameDB, GameStateDB } from "../db/game/GameDbType";
 import Game from "../db/game/index";
 
 export interface Action {
@@ -79,7 +79,7 @@ class GameState {
         console.log("in wait");
         if (action.type === "play" && action.card && action.cardIndex) {
           this.state = "play";
-          const cardPlayed = this.handleCardPlay(
+          const cardPlayed: Card | null = this.handleCardPlay(
             action.card,
             action.cardIndex,
             action.playerId,
@@ -88,6 +88,25 @@ class GameState {
           if (!cardPlayed) {
             // handle error
           } else {
+            // it has to be non null now
+            if (!this.topCard) {
+              throw Error(
+                "somehow top card undefined after successful card play",
+              );
+            }
+            console.log(
+              "about to call topCard to db type top is: ",
+              typeof this.topCard,
+            );
+            const cardForUpdate: CardDB = this.topCard.toCardDB();
+            // unknown in frontend type
+            cardForUpdate.game_id = this.gameId;
+            cardForUpdate.location = "discard";
+            // userId is indeed sent for this property of action on frontend
+            cardForUpdate.owner_id = Number(action.playerId);
+            Game.updateCard(cardForUpdate);
+            Game.updateGame(this.serializeOnlyGS());
+
             this.broadcastStateUpdate();
           }
         }
@@ -98,25 +117,26 @@ class GameState {
     }
   }
 
-  handleCardPlay(card: Card, cardIndex: number, id: string) {
+  handleCardPlay(card: Card, cardIndex: number, id: string): Card | null {
     // check if valid
     console.log("in handle play card: ", card);
+    const cardPlayed: Card = this.players[this.turn].hand[cardIndex];
     if (!this.isValidCard(card)) {
-      return false;
+      return null;
     }
     console.log("in handle play card it is indeed valid");
-    this.topCard = card;
+    this.topCard = cardPlayed;
     this.players[this.turn].hand.splice(cardIndex, 1);
     console.log("in handle play card removed from player hand");
     // handle special card
-    if (card.type === CardType.REVERSE) {
+    if (cardPlayed.type === CardType.REVERSE) {
       this.turnIncrement *= -1;
-    } else if (card.type === CardType.SKIP) {
+    } else if (cardPlayed.type === CardType.SKIP) {
       this.turn = this.incrementTurn();
-    } else if (card.type === CardType.DRAW) {
+    } else if (cardPlayed.type === CardType.DRAW) {
       // send draw message
       const player = this.incrementTurn();
-      if (card.value === 2) {
+      if (cardPlayed.value === 2) {
         this.players[player].hand = [
           ...this.players[player].hand,
           this.deck.pop()!,
@@ -131,13 +151,13 @@ class GameState {
           this.deck.pop()!,
         ];
       }
-    } else if (card.type === CardType.WILD) {
+    } else if (cardPlayed.type === CardType.WILD) {
       // do something
     }
     console.log("in handle play card about to return");
     this.state = "wait";
     this.turn = this.incrementTurn();
-    return true;
+    return cardPlayed;
   }
 
   incrementTurn(): number {
@@ -313,7 +333,7 @@ class GameState {
       turn: this.turn,
       turn_increment: this.turnIncrement,
       num_players: this.numPlayers,
-      top_card_id: null,
+      top_card_id: this.topCard ? this.topCard.id : null,
     };
     return gs;
   }
