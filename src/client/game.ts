@@ -30,7 +30,8 @@ var graphics_spec = {
 
 let chat_log: { message: string; user: { userId: number } }[] = [];
 
-let draw_el_disabled = false;
+// flag for draw card event listener
+let draw_el_disabled = true;
 
 // sockets
 let socket = io({ query: { userId, gid } });
@@ -65,7 +66,10 @@ socket.on("state-update", (data) => {
     data?.gameState !== "finished"
   ) {
     console.log("in here in state update");
-    console.log("data: ", data);
+    // console.log("data: ", data);
+    if (gameState.turn === 0) {
+      draw_el_disabled = false;
+    }
     draw_decks(gameState.topCard);
     draw_players(gameState);
   }
@@ -594,10 +598,11 @@ function handleChatSubmit(e: Event) {
   });
 }
 
-function mainPlayerDraw() {
+async function mainPlayerDraw() {
   if (draw_el_disabled) {
     return;
   }
+  draw_el_disabled = true;
   if (!userId || !gid) {
     return;
   }
@@ -606,14 +611,23 @@ function mainPlayerDraw() {
     playerId: userId,
     gameId: gid,
   };
-  // fetch()
-  animateCard(0);
+  const res = await fetch("/api/game/draw-card", {
+    method: "post",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, gid, action }),
+  });
+  const resJson = await res.json();
+  if (resJson.success) {
+    draw_el_disabled = true;
+  }
+  const cardDrew = resJson.card;
+  animateCardToHand(0);
 }
 
-function animateCard(playerIndex: number) {
+function animateCardToHand(playerIndex: number) {
   const lastPlayerHandCard = document.querySelector(`.player.p${playerIndex}`)
     ?.lastElementChild as HTMLElement;
-  const draw = document.querySelector(`draw`) as HTMLElement;
+  const draw = document.querySelector(".draw") as HTMLElement;
   if (!lastPlayerHandCard || !draw) return;
 
   const rect = draw.getBoundingClientRect();
@@ -634,7 +648,10 @@ function animateCard(playerIndex: number) {
   abs_card.style.transition = "all 0.75s ease-in-out";
   abs_container.appendChild(abs_card);
 
+  console.log("right BEFORE timeout in animation card to hand");
+
   setTimeout(() => {
+    console.log("INSIDE timeout in animation card to hand");
     const newRect = lastPlayerHandCard.getBoundingClientRect();
     abs_card.style.left = `${newRect.left + window.scrollX}px`;
     abs_card.style.top = `${newRect.top + window.scrollY}px`;

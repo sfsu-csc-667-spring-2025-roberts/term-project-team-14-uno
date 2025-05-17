@@ -109,6 +109,22 @@ class GameState {
 
             this.broadcastStateUpdate();
           }
+        } else if (action.type === "draw") {
+          this.state = "play";
+          const drewCard: Card | null = this.handleDrawCard(action);
+          if (!drewCard) {
+            // do what, throw error?
+          } else {
+            const updateCard: CardDB = drewCard.toCardDB();
+            updateCard.game_id = this.gameId;
+            updateCard.owner_id = Number(action.playerId);
+            updateCard.location = "hand";
+            Game.updateCard(updateCard);
+          }
+          this.state = "wait";
+          this.turn = this.incrementTurn();
+          Game.updateGame(this.serializeOnlyGS());
+          this.broadcastStateUpdate();
         }
         break;
       case "play":
@@ -174,6 +190,26 @@ class GameState {
       card.type !== this.topCard!.type ||
       card.type === CardType.WILD
     );
+  }
+
+  handleDrawCard(action: Action): Card | null {
+    if (this.deck.length === 0) {
+      return null;
+    }
+    const drewCard: Card | undefined = this.deck.pop();
+    if (!drewCard) {
+      return null;
+    }
+    const idx = this.players.findIndex(
+      (player) => player.userId === Number(action.playerId),
+    );
+    if (idx === -1) {
+      console.log("MEGA BIG ERROR IN HANDLE DRAW");
+      return null;
+    }
+    this.players[idx].hand.push(drewCard);
+    console.log("in handle draw, card drawn is: ", drewCard);
+    return drewCard;
   }
 
   handleWinner() {

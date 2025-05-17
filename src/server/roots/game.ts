@@ -103,6 +103,21 @@ router.post("/play-card", (req, res) => {
   res.json({ success: true });
 });
 
+router.post("/draw-card", (req, res) => {
+  const { userId, gid, action } = req.body;
+  // const {userId, gid} = req.session
+  const typedAction = action as Action;
+  if (!userId || !gid || !typedAction) {
+    res.status(401).json({ success: false, msg: "you are not logged in" });
+    return;
+  }
+
+  gameManager.games[gid].update(typedAction);
+  console.log("drew card: ", gameManager.games[gid].topCard);
+
+  res.json({ success: true, card: gameManager.games[gid].topCard });
+});
+
 router.post("/state-update", async (req, res) => {
   const { gid } = req.body;
   const userId = Number(req.body.userId);
