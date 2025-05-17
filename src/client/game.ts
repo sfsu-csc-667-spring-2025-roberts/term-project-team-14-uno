@@ -626,9 +626,11 @@ async function mainPlayerDraw() {
 
 function animateCardToHand(playerIndex: number) {
   const lastPlayerHandCard = document.querySelector(`.player.p${playerIndex}`)
-    ?.lastElementChild as HTMLElement;
+    ?.lastElementChild?.previousElementSibling as HTMLElement;
+  const computedStyle = window.getComputedStyle(lastPlayerHandCard);
+  const transform = computedStyle.transform;
   const draw = document.querySelector(".draw") as HTMLElement;
-  if (!lastPlayerHandCard || !draw) return;
+  if (!lastPlayerHandCard || !draw || !transform) return;
 
   const rect = draw.getBoundingClientRect();
   const w_card: number = rect.width;
@@ -655,6 +657,7 @@ function animateCardToHand(playerIndex: number) {
     const newRect = lastPlayerHandCard.getBoundingClientRect();
     abs_card.style.left = `${newRect.left + window.scrollX}px`;
     abs_card.style.top = `${newRect.top + window.scrollY}px`;
+    abs_card.style.transform = transform;
 
     abs_card.addEventListener("transitionend", () => {
       abs_card.remove();
