@@ -15,6 +15,7 @@ router.post("/new-game", async (req, res) => {
   // const username = req.session.username
   const username = "hellomiles";
   const userId = await User.register(username, "12345");
+  // const userId = 141
   if (!userId || typeof userId !== "number") {
     res.status(500).json({ success: false, msg: "you are not logged in" });
     return;
