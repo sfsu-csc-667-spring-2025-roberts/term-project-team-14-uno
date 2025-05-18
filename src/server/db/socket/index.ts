@@ -10,9 +10,8 @@ const updateSocket = async (
       `
       INSERT INTO sockets (socket_id, user_id, game_id)
       VALUES ($1, $2, $3)
-      ON CONFLICT (user_id) DO UPDATE SET
-        socket_id = EXCLUDED.socket_id,
-        game_id = EXCLUDED.game_id
+      ON CONFLICT (user_id, game_id) DO UPDATE SET
+        socket_id = EXCLUDED.socket_id
       `,
       [socketId, userId, gameId],
     );

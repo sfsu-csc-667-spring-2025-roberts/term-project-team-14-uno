@@ -227,7 +227,8 @@ class GameState {
     // socket message to player
     const player = this.players[index];
     // call game manager, send message
-    const playerSocket = gameManager.players[player.userId].socketId;
+    const playerSocket =
+      gameManager.players[player.userId][this.gameId].socketId;
     if (!playerSocket) {
       return false;
     }

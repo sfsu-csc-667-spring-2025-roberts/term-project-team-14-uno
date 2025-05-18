@@ -49,7 +49,7 @@ export function initSocket(server: HttpServer) {
     socket.on("game-state", (gid, userId) => {
       console.log("in game state");
       const playerState = gameManager.games[gid].getPlayerSubset(userId);
-      const playerSocket = gameManager.players[userId].socketId;
+      const playerSocket = gameManager.players[userId][gid].socketId;
       if (playerSocket) {
         io!.to(playerSocket).emit("state-update", playerState);
       } else {

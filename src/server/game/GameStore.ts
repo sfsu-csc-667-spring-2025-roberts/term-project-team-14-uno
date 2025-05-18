@@ -9,7 +9,9 @@ interface GameMap {
   [gameId: string]: GameState;
 }
 interface PlayerMap {
-  [playerId: string]: { socketId: string | null; gameId: string };
+  [playerId: string]: {
+    [gameId: string]: { socketId: string | null };
+  };
 }
 
 class GameStore {
@@ -60,18 +62,30 @@ class GameStore {
       gs = GameState.fromSQL(game_db);
       this.games[g.game_id] = gs;
       sockets = await Games.getSockets(g.game_id);
+      console.log("in game store init with sockets: ", sockets);
 
       const socketMap = new Map<number, string>(); // user_id -> socket_id
       sockets.forEach((s) => {
         socketMap.set(s.user_id, s.socket_id);
       });
 
-      players.forEach((player) => {
-        this.players[player.user_id.toString()] = {
-          socketId: socketMap.get(player.user_id) || null,
-          gameId: player.game_id,
+      sockets.forEach((player) => {
+        const playerSocketId = socketMap.get(player.user_id) ?? null;
+        if (!this.players[player.user_id.toString()]) {
+          this.players[player.user_id.toString()] = {};
+        }
+        this.players[player.user_id.toString()][g.game_id] = {
+          socketId: playerSocketId ? playerSocketId : null,
         };
       });
+      // players.forEach((player) => {
+      //   const playerSocketId = socketMap.get(player.user_id) ?? null;
+      //   this.players[player.user_id.toString()][g.game_id] = {socketId: playerSocketId ? playerSocketId : null }
+      // });
+      console.log(
+        "in game store init sockets for players added for a game: ",
+        this.players,
+      );
     }
   }
 
@@ -79,55 +93,58 @@ class GameStore {
     const gs = new GameState(String(GameStore.getGameId()));
     gs.addPlayer(userId, username);
     this.games[gs.gameId] = gs;
-    this.players[userId] = { socketId: null, gameId: gs.gameId };
+    if (!this.players[userId]) {
+      this.players[userId] = {};
+    }
+    this.players[userId][gs.gameId] = { socketId: null };
     // return {gameId: gs.gameId, startGame: false}; // maybe update if we allow single player
     Games.addGameRecord(gs.serializeOnlyGS());
     return gs.gameId;
   }
 
-  joinGame(userId: number, username: string) {
-    console.log("user joining with id ", userId);
-    if (Object.keys(this.games).length === 0) {
-      // or check if all games full?
-      const gs = new GameState(String(GameStore.getGameId()));
-      gs.addPlayer(userId, username);
-      this.games[gs.gameId] = gs;
-      this.players[userId] = { socketId: null, gameId: gs.gameId };
-      // return {gameId: gs.gameId, startGame: false}; // maybe update if we allow single player
-      Games.addGameRecord(gs.serializeOnlyGS());
-      return gs.gameId;
-    }
-    // check for open game
-    for (let id in this.games) {
-      if (this.games[id].state === "uninitialized") {
-        console.log("founduninitialized game: ", id);
-        this.games[id].addPlayer(userId, username);
-        this.players[userId] = { socketId: null, gameId: id };
-        const start =
-          this.games[id].players.length === this.games[id].numPlayers;
-        // return {gameId: id, startGame: start};
-        console.log(
-          "start condition players: ",
-          this.games[id].players.length,
-          " and required num: ",
-          this.games[id].numPlayers,
-        );
-        // if (start) {
-        //   console.log("it is start")
-        //   getIO().to(id).emit("start-game", "start");
-        // }
-        console.log("about to return ", id);
-        return id;
-      }
-    }
-    // all games full, create new
-    const gs = new GameState(String(GameStore.getGameId()));
-    gs.addPlayer(userId, username);
-    this.games[gs.gameId] = gs;
-    this.players[userId] = { socketId: null, gameId: gs.gameId };
-    Games.addGameRecord(gs.serializeOnlyGS());
-    return gs.gameId;
-  }
+  // joinGame(userId: number, username: string) {
+  //   console.log("user joining with id ", userId);
+  //   if (Object.keys(this.games).length === 0) {
+  //     // or check if all games full?
+  //     const gs = new GameState(String(GameStore.getGameId()));
+  //     gs.addPlayer(userId, username);
+  //     this.games[gs.gameId] = gs;
+  //     this.players[userId] = { socketId: null, gameId: gs.gameId };
+  //     // return {gameId: gs.gameId, startGame: false}; // maybe update if we allow single player
+  //     Games.addGameRecord(gs.serializeOnlyGS());
+  //     return gs.gameId;
+  //   }
+  //   // check for open game
+  //   for (let id in this.games) {
+  //     if (this.games[id].state === "uninitialized") {
+  //       console.log("founduninitialized game: ", id);
+  //       this.games[id].addPlayer(userId, username);
+  //       this.players[userId] = { socketId: null, gameId: id };
+  //       const start =
+  //         this.games[id].players.length === this.games[id].numPlayers;
+  //       // return {gameId: id, startGame: start};
+  //       console.log(
+  //         "start condition players: ",
+  //         this.games[id].players.length,
+  //         " and required num: ",
+  //         this.games[id].numPlayers,
+  //       );
+  //       // if (start) {
+  //       //   console.log("it is start")
+  //       //   getIO().to(id).emit("start-game", "start");
+  //       // }
+  //       console.log("about to return ", id);
+  //       return id;
+  //     }
+  //   }
+  //   // all games full, create new
+  //   const gs = new GameState(String(GameStore.getGameId()));
+  //   gs.addPlayer(userId, username);
+  //   this.games[gs.gameId] = gs;
+  //   this.players[userId] = { socketId: null, gameId: gs.gameId };
+  //   Games.addGameRecord(gs.serializeOnlyGS());
+  //   return gs.gameId;
+  // }
 
   joinSpecificGame(userId: number, username: string, gid: string) {
     const game = this.games[gid];
@@ -136,7 +153,10 @@ class GameStore {
       return false;
     }
     this.games[gid].addPlayer(userId, username);
-    this.players[userId] = { socketId: null, gameId: gid };
+    if (!this.players[userId]) {
+      this.players[userId] = {};
+    }
+    this.players[userId][gid] = { socketId: null };
     return true;
   }
 
@@ -149,7 +169,7 @@ class GameStore {
     console.log("player entry in game manager: ", this.players[userId]);
     console.log("update socket user: ", userId, " and socket: ", socketId);
 
-    const oldSocketId = this.players[userId]?.socketId;
+    const oldSocketId = this.players[userId]?.[gameId]?.socketId;
     if (oldSocketId && oldSocketId !== socketId) {
       const oldSocket = getIO().sockets.sockets.get(oldSocketId);
       if (oldSocket) {
@@ -159,9 +179,10 @@ class GameStore {
     }
 
     if (!this.players[userId]) {
-      this.players[userId] = { socketId: null, gameId: gameId };
+      this.players[userId] = {};
+      this.players[userId][gameId] = { socketId: null };
     }
-    this.players[userId].socketId = socketId;
+    this.players[userId][gameId].socketId = socketId;
     Sockets.updateSocket(socketId, userId, gameId);
   }
 

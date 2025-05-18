@@ -61,33 +61,33 @@ router.post("/join-game", async (req, res) => {
   res.json({ success: true, gid, userId: userId });
 });
 
-router.post("/join", async (req, res) => {
-  const { username } = req.body;
-  // temporarily create user
-  const userId = await User.register(username, "12345");
-  if (!userId || typeof userId !== "number") {
-    res.status(500).json({ success: false, msg: "you are not logged in" });
-    return;
-  }
-  // // @ts-ignore
-  // const userId = req.session.userId
-  // // @ts-ignore
-  // const username = req.session.username
-  if (!userId || !username) {
-    res.status(401).json({ success: false, msg: "you are not logged in" });
-    return;
-  }
-  // console.log("gm before: ", gameManager);
-  const gameId = gameManager.joinGame(Number(userId), username);
-  if (!gameId) {
-    res.status(500).json({ success: false, msg: "error joining a game" });
-    return;
-  }
-  // console.log("gm after: ", gameManager);
-  // console.log("now game state is: ", gameManager.games[gameId]);
+// router.post("/join", async (req, res) => {
+//   const { username } = req.body;
+//   // temporarily create user
+//   const userId = await User.register(username, "12345");
+//   if (!userId || typeof userId !== "number") {
+//     res.status(500).json({ success: false, msg: "you are not logged in" });
+//     return;
+//   }
+//   // // @ts-ignore
+//   // const userId = req.session.userId
+//   // // @ts-ignore
+//   // const username = req.session.username
+//   if (!userId || !username) {
+//     res.status(401).json({ success: false, msg: "you are not logged in" });
+//     return;
+//   }
+//   // console.log("gm before: ", gameManager);
+//   const gameId = gameManager.joinGame(Number(userId), username);
+//   if (!gameId) {
+//     res.status(500).json({ success: false, msg: "error joining a game" });
+//     return;
+//   }
+//   // console.log("gm after: ", gameManager);
+//   // console.log("now game state is: ", gameManager.games[gameId]);
 
-  res.json({ success: true, gid: gameId, userId: userId });
-});
+//   res.json({ success: true, gid: gameId, userId: userId });
+// });
 
 router.post("/play-card", (req, res) => {
   const { userId, gid, action } = req.body;
@@ -125,7 +125,7 @@ router.post("/state-update", async (req, res) => {
   if (!gid || !userId) {
     res.status(401).json({ success: false, msg: "error fetching state" });
   }
-  const socket = gameManager.players[userId].socketId;
+  const socket = gameManager.players[userId][gid].socketId;
   if (!socket) {
     res.status(401).json({ success: false, msg: "error fetching state" });
   }
