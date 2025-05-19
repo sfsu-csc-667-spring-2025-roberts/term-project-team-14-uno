@@ -83,6 +83,7 @@ class GameState {
             action.card,
             action.cardIndex,
             action.playerId,
+            action.wildColor ? action.wildColor : null,
           );
           console.log("after card played");
           if (!cardPlayed) {
@@ -133,7 +134,12 @@ class GameState {
     }
   }
 
-  handleCardPlay(card: Card, cardIndex: number, id: string): Card | null {
+  handleCardPlay(
+    card: Card,
+    cardIndex: number,
+    id: string,
+    color: string | null,
+  ): Card | null {
     // check if valid
     console.log("in handle play card: ", card);
     const cardPlayed: Card = this.players[this.turn].hand[cardIndex];
@@ -150,25 +156,123 @@ class GameState {
     } else if (cardPlayed.type === CardType.SKIP) {
       this.turn = this.incrementTurn();
     } else if (cardPlayed.type === CardType.DRAW) {
-      // send draw message
       const player = this.incrementTurn();
-      if (cardPlayed.value === 2) {
-        this.players[player].hand = [
-          ...this.players[player].hand,
-          this.deck.pop()!,
-          this.deck.pop()!,
-        ];
+      // *todo* fix if deck runs out
+      const drawnCards: Card[] = [this.deck.pop()!, this.deck.pop()!];
+      Game.updateCards(
+        drawnCards.map((card) => {
+          const db_card = card.toCardDB();
+          db_card.owner_id = this.players[player].userId;
+          db_card.location = "hand";
+          return db_card;
+        }),
+      );
+      this.players[player].hand.push(...drawnCards);
+      // send draw message
+      let nextPlayerSocket =
+        gameManager.players[
+          this.players[this.incrementTurn()].userId.toString()
+        ][this.gameId].socketId;
+      if (!nextPlayerSocket) {
+        console.log(
+          "ANOTHER BIG ERROR, increment turn should produce increment: ",
+          this.incrementTurn(),
+          " and player: ",
+          this.players[this.incrementTurn()],
+        );
       } else {
-        this.players[player].hand = [
-          ...this.players[player].hand,
-          this.deck.pop()!,
-          this.deck.pop()!,
-          this.deck.pop()!,
-          this.deck.pop()!,
-        ];
+        getIO().to(nextPlayerSocket).emit("draw-notification", {
+          drawCount: 2,
+        });
       }
+      this.turn = this.incrementTurn();
     } else if (cardPlayed.type === CardType.WILD) {
       // do something
+      if (!(color && color.toUpperCase() in Color)) {
+        // Invalid color
+        console.log("incorrect wild color: ", color);
+        throw new Error("the action color from wild is incorrect");
+      }
+      console.log("this is the actual color: ", color, " and");
+      console.log(
+        "selected color for wild is: ",
+        Color[color.toUpperCase() as keyof typeof Color],
+      );
+      this.topCard.color = Color[color.toUpperCase() as keyof typeof Color];
+      // notify next player of color picked
+
+      // this indicates it is a wild draw 4
+      if (card.value === 4) {
+        // first notify skipped player of draw
+        const player = this.incrementTurn();
+        let nextPlayerSocket =
+          gameManager.players[
+            this.players[this.incrementTurn()].userId.toString()
+          ][this.gameId].socketId;
+        if (!nextPlayerSocket) {
+          console.log(
+            "ANOTHER BIG ERROR, increment turn should produce increment: ",
+            this.incrementTurn(),
+            " and player: ",
+            this.players[this.incrementTurn()],
+          );
+        } else {
+          getIO().to(nextPlayerSocket).emit("draw-notification", {
+            drawCount: 4,
+          });
+        }
+        this.turn = this.incrementTurn();
+        nextPlayerSocket =
+          gameManager.players[
+            this.players[this.incrementTurn()].userId.toString()
+          ][this.gameId].socketId;
+        if (!nextPlayerSocket) {
+          console.log(
+            "ANOTHER BIG ERROR, increment turn should produce increment: ",
+            this.incrementTurn(),
+            " and player: ",
+            this.players[this.incrementTurn()],
+          );
+        } else {
+          getIO().to(nextPlayerSocket).emit("wild-selection", {
+            color: color.toUpperCase(),
+          });
+        }
+        // *todo* fix if deck runs out
+        const drawnCards: Card[] = [
+          this.deck.pop()!,
+          this.deck.pop()!,
+          this.deck.pop()!,
+          this.deck.pop()!,
+        ];
+        Game.updateCards(
+          drawnCards.map((card) => {
+            const db_card = card.toCardDB();
+            db_card.owner_id = this.players[player].userId;
+            db_card.location = "hand";
+            return db_card;
+          }),
+        );
+        this.players[player].hand.push(...drawnCards);
+      } else {
+        // it is a normal wild card
+        const nextPlayerSocket =
+          gameManager.players[
+            this.players[this.incrementTurn()].userId.toString()
+          ][this.gameId].socketId;
+        if (!nextPlayerSocket) {
+          console.log(
+            "ANOTHER BIG ERROR, increment turn should produce increment: ",
+            this.incrementTurn(),
+            " and player: ",
+            this.players[this.incrementTurn()],
+          );
+        } else {
+          getIO().to(nextPlayerSocket).emit("wild-selection", {
+            color: color.toUpperCase(),
+          });
+        }
+      }
     }
     console.log("in handle play card about to return");
     this.state = "wait";

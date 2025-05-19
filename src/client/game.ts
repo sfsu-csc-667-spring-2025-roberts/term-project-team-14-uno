@@ -115,6 +115,48 @@ socket.on("action-update", () => {
   });
 });
 
+socket.on("draw-notification", (data) => {
+  const { drawCount } = data;
+
+  const gc = document.querySelector(".game-container");
+  if (!gc) return;
+
+  // Create modal container
+  const modal = document.createElement("div");
+  modal.classList.add("modal");
+  const header = document.createElement("h1");
+  header.innerText = `A draw card was played, increasing your hand by ${drawCount}`;
+  modal.appendChild(header);
+
+  gc.appendChild(modal);
+
+  // Remove modal after 3 seconds
+  setTimeout(() => {
+    modal.remove();
+  }, 10000);
+});
+
+socket.on("wild-selection", (data) => {
+  const { color } = data;
+
+  const gc = document.querySelector(".game-container");
+  if (!gc) return;
+
+  // Create modal container
+  const modal = document.createElement("div");
+  modal.classList.add("modal");
+  const header = document.createElement("h1");
+  header.innerText = `Wild card was played and the selected color: ${color}`;
+  modal.appendChild(header);
+
+  gc.appendChild(modal);
+
+  // Remove modal after 3 seconds
+  setTimeout(() => {
+    modal.remove();
+  }, 10000);
+});
+
 const main = async () => {
   // draw_decks_container()
   // let res = await fetch("gs.json")
@@ -478,6 +520,7 @@ async function play_card(
   }
   if (card.type === CardType.WILD) {
     // handle wild selection
+    color = await handleWildChoice();
   }
   let action: Action;
   action = {
@@ -506,6 +549,45 @@ async function play_card(
 
 function isValidCard(card: Card) {
   return true;
+}
+
+function handleWildChoice(): Promise<string> {
+  return new Promise((resolve) => {
+    const gc = document.querySelector(".game-container");
+    if (!gc) return resolve("red"); // fallback
+
+    const modal = document.createElement("div");
+    modal.classList.add("modal");
+
+    const header = document.createElement("h2");
+    header.textContent = "Choose a Color:";
+    modal.appendChild(header);
+
+    const body = document.createElement("div");
+    body.classList.add("modal__body");
+    modal.appendChild(body);
+
+    const colors = ["red", "green", "blue", "yellow"];
+    const buttons = colors.map((color) => {
+      const btn = document.createElement("div");
+      btn.classList.add("card");
+      const card_img = document.createElement("img");
+      card_img.setAttribute(
+        "src",
+        `card_img/card_blank_${color.charAt(0)}.svg`,
+      );
+      btn.appendChild(card_img);
+      btn.style.margin = "0.5rem";
+      btn.onclick = () => {
+        gc.removeChild(modal); // remove modal
+        resolve(color);
+      };
+      return btn;
+    });
+
+    buttons.forEach((btn) => body.appendChild(btn));
+    gc.appendChild(modal);
+  });
 }
 
 // Drawing decks in the middle

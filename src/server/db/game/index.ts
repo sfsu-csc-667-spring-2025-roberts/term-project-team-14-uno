@@ -158,7 +158,7 @@ const updateGame = async (state: GameStateDB): Promise<boolean> => {
   ];
   try {
     const res = await db.none(query, values);
-    console.log("games db: ", res);
+    // console.log("games db: ", res);
     return true;
   } catch (error) {
     console.log("error updating games table in game state: ", error);
@@ -172,7 +172,7 @@ const getCards = async (gid: string): Promise<CardDB[]> => {
 `;
   try {
     const res = await db.any(query);
-    console.log("cards db: ", res);
+    // console.log("cards db: ", res);
     const cards = res.map((card) => ({
       id: card.id,
       game_id: card.game_id,
@@ -224,6 +224,56 @@ const updateCard = async (card: CardDB): Promise<boolean> => {
     return true;
   } catch (err) {
     console.error("Error during card update:", err);
+    return false;
+  }
+};
+const updateCards = async (cards: CardDB[]): Promise<boolean> => {
+  if (cards.length === 0) return true;
+
+  const valuesClause = cards
+    .map(
+      (_, i) =>
+        `($${i * 9 + 1}, $${i * 9 + 2}, $${i * 9 + 3}, $${i * 9 + 4}, $${i * 9 + 5}, $${i * 9 + 6}, $${i * 9 + 7}, $${i * 9 + 8}, $${i * 9 + 9})`,
+    )
+    .join(",\n");
+
+  const query = `
+    WITH updated (id, game_id, value, color, type, img, location, owner_id, position) AS (
+      VALUES
+      ${valuesClause}
+    )
+    UPDATE game_cards gc
+    SET
+      game_id = updated.game_id,
+      value = updated.value,
+      color = updated.color,
+      type = updated.type,
+      img = updated.img,
+      location = updated.location,
+      owner_id = updated.owner_id,
+      position = updated.position
+    FROM updated
+    WHERE gc.id = updated.id;
+  `;
+
+  const allValues = cards.flatMap((card) => [
+    card.id,
+    card.game_id,
+    card.value,
+    card.color,
+    card.type,
+    card.img,
+    card.location,
+    card.owner_id,
+    card.position,
+  ]);
+
+  try {
+    await db.none(query, allValues);
+    console.log(`Updated ${cards.length} cards`);
+    return true;
+  } catch (err) {
+    console.error("Error during batch card update:", err);
     return false;
   }
 };
@@ -309,7 +359,7 @@ const getOpenGames = async (): Promise<GameStateDB[]> => {
   const query = "SELECT * FROM games WHERE state='uninitialized'";
   try {
     const res = await db.any(query);
-    console.log("games db: ", res);
+    // console.log("games db: ", res);
     return res;
   } catch (error) {
     console.log("error fetching open games: ", error);
@@ -346,6 +396,7 @@ export default {
   getPlayers,
   getCards,
   updateCard,
+  updateCards,
   getNextDrawCard,
   getSockets,
   getOpenGames,
