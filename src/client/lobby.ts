@@ -1,4 +1,5 @@
-const username = generateRandomId();
+const username = getOrCreateUsername();
+
 export interface GameStateDB {
   game_id: string;
   state: string;
@@ -7,30 +8,40 @@ export interface GameStateDB {
   num_players: number;
   top_card_id: null | string;
 }
+
 document.addEventListener("DOMContentLoaded", async () => {
   const container = document.querySelector(".join-game");
-  if (!container) {
-    return;
-  }
-  const res = await fetch("/api/game/open-games");
-  const resJson = await res.json();
-  console.log(resJson);
+  if (!container) return;
 
-  for (let game of resJson as GameStateDB[]) {
-    const card = document.createElement("div");
-    card.classList.add("game-card");
+  try {
+    const res = await fetch("/api/game/open-games");
+    const resJson = await res.json();
+    console.log(resJson);
 
-    card.innerHTML = `
-      <div class="game-info">
-        <p><strong>Game ID:</strong> ${game.game_id}</p>
-        <p><strong>Players:</strong> ${game.num_players}</p>
-        <p><strong>State:</strong> ${game.state}</p>
-        <p><strong>Turn:</strong> ${game.turn}</p>
-      </div>
-      <button class="join-button" data-game-id="${game.game_id}">Join Game</button>
-    `;
+    if ((resJson as GameStateDB[]).length === 0) {
+      container.innerHTML = "<p>No open games available right now.</p>";
+      return;
+    }
 
-    container.appendChild(card);
+    for (let game of resJson as GameStateDB[]) {
+      const card = document.createElement("div");
+      card.classList.add("game-card");
+
+      card.innerHTML = `
+        <div class="game-info">
+          <p><strong>Game ID:</strong> ${game.game_id}</p>
+          <p><strong>Players:</strong> ${game.num_players}</p>
+          <p><strong>State:</strong> ${game.state}</p>
+          <p><strong>Turn:</strong> ${game.turn}</p>
+        </div>
+        <button class="join-button" data-game-id="${game.game_id}">Join Game</button>
+      `;
+
+      container.appendChild(card);
+    }
+  } catch (err) {
+    alert("Failed to load open games.");
+    console.error(err);
   }
 
   container.addEventListener("click", async (e) => {
@@ -38,33 +49,56 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (target.classList.contains("join-button")) {
       const gameId = target.dataset.gameId;
       console.log(`Joining game ${gameId}`);
-      const res = await fetch("/api/game/join-game", {
-        method: "post",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, gid: gameId }),
-      });
-      const resJson = await res.json();
-      if (!resJson.success) {
-        console.log("error");
+      try {
+        const res = await fetch("/api/game/join-game", {
+          method: "post",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, gid: gameId }),
+        });
+        const resJson = await res.json();
+        if (!resJson.success) {
+          alert("Unable to join game. It may be full or unavailable.");
+          return;
+        }
+        window.location.href = `/game?gid=${resJson.gid}&pid=${resJson.userId}`;
+      } catch (err) {
+        alert("Error joining game.");
+        console.error(err);
       }
-      window.location.href = `/game?gid=${resJson.gid}&pid=${resJson.userId}`;
     }
   });
 });
 
 document.querySelector(".start-btn")!.addEventListener("click", async () => {
-  const res = await fetch("/api/game/new-game", {
-    method: "post",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username }),
-  });
-  const resJson = await res.json();
-  if (!resJson.success) {
-    console.log("error");
+  try {
+    const res = await fetch("/api/game/new-game", {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username }),
+    });
+    const resJson = await res.json();
+    if (!resJson.success) {
+      alert("Failed to create new game.");
+      return;
+    }
+    window.location.href = `/game?gid=${resJson.gid}&pid=${resJson.userId}`;
+  } catch (err) {
+    alert("Error creating new game.");
+    console.error(err);
   }
-  window.location.href = `/game?gid=${resJson.gid}&pid=${resJson.userId}`;
 });
-// replace with cookie/auth system
-function generateRandomId() {
+
+// Persistent username thru localStorage
+function getOrCreateUsername(): string {
+  const key = "uno-username";
+  let name = localStorage.getItem(key);
+  if (!name) {
+    name = generateRandomId();
+    localStorage.setItem(key, name);
+  }
+  return name;
+}
+
+function generateRandomId(): string {
   return Math.floor(10000000 + Math.random() * 90000000).toString();
 }
