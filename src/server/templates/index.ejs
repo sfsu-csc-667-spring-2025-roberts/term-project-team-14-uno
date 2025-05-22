@@ -18,7 +18,7 @@
                         <stop offset="0%" stop-color="#FF0000" />
                         <stop offset="100%" stop-color="#FFD700" />
                     </linearGradient>
-  
+
                     <!-- Black outline -->
                     <filter id="outline">
                         <feMorphology in="SourceAlpha" result="DILATED" operator="dilate" radius="3" />
@@ -30,7 +30,7 @@
                         </feMerge>
                     </filter>
                 </defs>
-  
+
                 <!-- UNO Letters -->
                 <text x="20" y="110" font-family="'Arial Black', sans-serif" font-size="100" font-style="italic"
                     fill="url(#unoFill)" filter="url(#outline)">
@@ -43,18 +43,41 @@
         </ul>
     </nav>
     <h1>Welcome to the Uno Lobby!</h1>
-    <div class="container">
-        <!-- <div class="card">
+    <div class="layout chat-closed">
+        <div class="open-chat" title="Open chat">‹</div>
+        <div class="container">
+            <!-- <div class="card">
             <img src="/card_img/card_back.svg" alt="">
         </div>
         <button class="start">Start Game!</button> -->
-        <div class="start-game">
-            <div class="header-container"><h2>Start New Game</h2></div>
-            <p>start your own Uno game. Click start to enter a brand new game, other players will eventually join!</p>
-            <button class="start-btn">Start Game</button>
+            <div class="start-game">
+                <div class="header-container">
+                    <h2>Start New Game</h2>
+                </div>
+                <p>Start your own Uno game. Click start to enter a brand new game, other players will eventually join!
+                </p>
+                <button class="start-btn">Start Game</button>
+            </div>
+            <div class="join-game">
+                <div class="header-container">
+                    <h2>Join a Waiting Game</h2>
+                </div>
+            </div>
+            <div class="user-games">
+                <div class="header-container">
+                    <h2>Your current active games</h2>
+                </div>
+            </div>
         </div>
-        <div class="join-game">
-            <div class="header-container"><h2>Join a Waiting Game</h2></div>
+        <div class="chat hidden">
+            <div class="chat__header">
+                <h3>Chat Messages</h1>
+            </div>
+            <div class="chat__messages"></div>
+            <div class="chat__post">
+                <input type="text" name="chat-post" id="chat-post">
+                <button id="chat-submit">Submit</button>
+            </div>
         </div>
     </div>
     <script src="/js/lobby.js"></script>

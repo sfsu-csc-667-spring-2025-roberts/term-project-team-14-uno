@@ -79,6 +79,7 @@ class GameState {
         console.log("in wait");
         if (action.type === "play" && action.card && action.cardIndex != null) {
           this.state = "play";
+          const player = this.players[this.turn];
           const cardPlayed: Card | null = this.handleCardPlay(
             action.card,
             action.cardIndex,
@@ -115,6 +116,9 @@ class GameState {
             Game.updateGame(this.serializeOnlyGS());
 
             this.broadcastStateUpdate();
+            if (player.hand.length === 0) {
+              this.handleWinner(player);
+            }
           }
         } else if (action.type === "draw") {
           this.state = "play";
@@ -158,8 +162,14 @@ class GameState {
     console.log("in handle play card removed from player hand");
     // handle special card
     if (cardPlayed.type === CardType.REVERSE) {
+      const playerNotify_1 = this.incrementTurn();
+      this.messagePlayer(playerNotify_1, "Your turn is skipped.", "reverse");
       this.turnIncrement *= -1;
+      const playerNotify_2 = this.incrementTurn();
+      this.messagePlayer(playerNotify_2, "It is now your turn", "reverse");
     } else if (cardPlayed.type === CardType.SKIP) {
+      const playerNotify_1 = this.incrementTurn();
+      this.messagePlayer(playerNotify_1, "skip card played.", "turn-skip");
       this.turn = this.incrementTurn();
     } else if (cardPlayed.type === CardType.DRAW) {
       const player = this.incrementTurn();
@@ -296,6 +306,12 @@ class GameState {
     if (this.topCard === null) {
       return true;
     }
+    if (
+      card.type === CardType.REGULAR &&
+      this.topCard?.type !== CardType.REGULAR
+    ) {
+      return card.color === this.topCard.color;
+    }
     return (
       card.value === this.topCard!.value ||
       card.color === this.topCard!.color ||
@@ -323,8 +339,13 @@ class GameState {
     return drewCard;
   }
 
-  handleWinner() {
-    // do stuff
+  handleWinner(player: Player) {
+    this.state = "gg";
+    this.broadcastWinner(player);
+    gameManager.removeGame(
+      this.gameId,
+      this.players.map((player) => player.userId),
+    );
   }
 
   addPlayer(id: number, username: string | null) {
@@ -360,6 +381,12 @@ class GameState {
         this.getPlayerSubset(this.players[i].userId),
         "state-update",
       );
+    }
+  }
+  broadcastWinner(player: Player) {
+    console.log("broadcast winner");
+    for (let i = 0; i < this.numPlayers; i++) {
+      this.messagePlayer(i, { winner: player }, "win-notification");
     }
   }
 

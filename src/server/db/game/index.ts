@@ -166,6 +166,17 @@ const updateGame = async (state: GameStateDB): Promise<boolean> => {
   }
 };
 
+const deleteGame = async (game_id: string): Promise<boolean> => {
+  const query = `DELETE FROM games WHERE game_id = $1`;
+  try {
+    await db.none(query, [game_id]);
+    return true;
+  } catch (error) {
+    console.log("error deleting game: ", error);
+    return false;
+  }
+};
+
 const getCards = async (gid: string): Promise<CardDB[]> => {
   const query = `
   SELECT * FROM game_cards where game_id='${gid}'
@@ -410,6 +421,7 @@ export default {
   getGames,
   getUserGames,
   updateGame,
+  deleteGame,
   getPlayers,
   getCards,
   updateCard,

@@ -1,4 +1,40 @@
+import { io, Socket } from "socket.io-client";
+
 const username = generateRandomId();
+const chat_log = [];
+
+let socket = io({ query: { gid: "lobby" } });
+socket.on("connect", () => {
+  console.log(`connected with ${socket.id}`);
+  // socket.emit("join-game", gid);
+  // socket.emit("game-state", gid, userId);
+});
+
+socket.on("chat-message", ({ body, user }) => {
+  console.log(`chat message received ${user.id}: ${body}`);
+  const newChatMessage = { message: body, user: { userId: user.id } };
+  chat_log.push(newChatMessage);
+  const chatMsgContainer = document.querySelector(".chat__messages");
+  if (!chatMsgContainer) {
+    return;
+  }
+  const newMsgDiv = document.createElement("div");
+  newMsgDiv.classList.add("chat__msg");
+  const msgGrav = document.createElement("div");
+  msgGrav.classList.add("chat__gavitar");
+  const msgUser = document.createElement("span");
+  msgUser.classList.add("chat__msg-user");
+  msgUser.innerText = newChatMessage.user.userId;
+  const msgBody = document.createElement("span");
+  msgBody.classList.add("chat__msg-body");
+  msgBody.innerText = newChatMessage.message;
+
+  newMsgDiv.appendChild(msgGrav);
+  newMsgDiv.appendChild(msgUser);
+  newMsgDiv.appendChild(msgBody);
+
+  chatMsgContainer.appendChild(newMsgDiv);
+});
 
 export interface GameStateDB {
   game_id: string;
@@ -19,7 +55,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.log(resJson);
 
     if ((resJson as GameStateDB[]).length === 0) {
-      container.innerHTML = "<p>No open games available right now.</p>";
+      const p = document.createElement("p");
+      p.innerText = "No open games available right now, start a new game!";
+      container.appendChild(p);
       return;
     }
 
@@ -90,6 +128,32 @@ document.querySelector(".start-btn")!.addEventListener("click", async () => {
   }
 });
 
+document
+  .getElementById("chat-submit")!
+  .addEventListener("click", handleChatSubmit);
+
+document.querySelector(".open-chat")!.addEventListener("click", () => {
+  const chat = document.querySelector(".chat");
+  const layout = document.querySelector(".layout");
+  const chat_button = document.querySelector(".open-chat") as HTMLElement;
+  if (!chat || !layout || !chat_button) return;
+
+  if (chat.classList.contains("hidden")) {
+    chat.classList.remove("hidden");
+    layout.classList.remove("chat-closed");
+
+    chat_button.innerHTML = "›";
+    const rect = chat.getBoundingClientRect();
+    const chat_button_offset_from_right = window.innerWidth - rect.left;
+    chat_button.style.right = `${chat_button_offset_from_right}px`;
+  } else {
+    chat.classList.add("hidden");
+    layout.classList.add("chat-closed");
+    chat_button.innerHTML = "‹";
+    chat_button.style.right = `0px`;
+  }
+});
+
 // Persistent username thru localStorage
 function getOrCreateUsername(): string {
   const key = "uno-username";
@@ -103,4 +167,25 @@ function getOrCreateUsername(): string {
 
 function generateRandomId(): string {
   return Math.floor(10000000 + Math.random() * 90000000).toString();
+}
+
+function handleChatSubmit(e: Event) {
+  console.log("handle chat submit");
+  const input = document.getElementById("chat-post") as HTMLInputElement;
+  if (!input) {
+    console.log("no input");
+    return;
+  }
+  const message = input?.value;
+  if (!message) {
+    console.log("no message");
+    return;
+  }
+  console.log("gotten here");
+  input.value = "";
+  fetch("/api/chat/post", {
+    method: "post",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, gid: "lobby", userId: username }),
+  });
 }

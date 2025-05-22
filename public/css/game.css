@@ -182,12 +182,13 @@ html {
 .chat__msg {
   width: 100%;
   margin: 1.2rem 0;
-  display: grid;
-  grid-template-columns: 5% 10% 80%;
-  column-gap: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
 }
 .chat__gavitar {
-  height: 100%;
+  display: inline-block;
+  height: 1rem;
   aspect-ratio: 100/100;
   background-color: black;
   border-radius: 50%;

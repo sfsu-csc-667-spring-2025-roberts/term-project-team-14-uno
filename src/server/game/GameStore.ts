@@ -102,50 +102,6 @@ class GameStore {
     return gs.gameId;
   }
 
-  // joinGame(userId: number, username: string) {
-  //   console.log("user joining with id ", userId);
-  //   if (Object.keys(this.games).length === 0) {
-  //     // or check if all games full?
-  //     const gs = new GameState(String(GameStore.getGameId()));
-  //     gs.addPlayer(userId, username);
-  //     this.games[gs.gameId] = gs;
-  //     this.players[userId] = { socketId: null, gameId: gs.gameId };
-  //     // return {gameId: gs.gameId, startGame: false}; // maybe update if we allow single player
-  //     Games.addGameRecord(gs.serializeOnlyGS());
-  //     return gs.gameId;
-  //   }
-  //   // check for open game
-  //   for (let id in this.games) {
-  //     if (this.games[id].state === "uninitialized") {
-  //       console.log("founduninitialized game: ", id);
-  //       this.games[id].addPlayer(userId, username);
-  //       this.players[userId] = { socketId: null, gameId: id };
-  //       const start =
-  //         this.games[id].players.length === this.games[id].numPlayers;
-  //       // return {gameId: id, startGame: start};
-  //       console.log(
-  //         "start condition players: ",
-  //         this.games[id].players.length,
-  //         " and required num: ",
-  //         this.games[id].numPlayers,
-  //       );
-  //       // if (start) {
-  //       //   console.log("it is start")
-  //       //   getIO().to(id).emit("start-game", "start");
-  //       // }
-  //       console.log("about to return ", id);
-  //       return id;
-  //     }
-  //   }
-  //   // all games full, create new
-  //   const gs = new GameState(String(GameStore.getGameId()));
-  //   gs.addPlayer(userId, username);
-  //   this.games[gs.gameId] = gs;
-  //   this.players[userId] = { socketId: null, gameId: gs.gameId };
-  //   Games.addGameRecord(gs.serializeOnlyGS());
-  //   return gs.gameId;
-  // }
-
   joinSpecificGame(userId: number, username: string, gid: string) {
     const game = this.games[gid];
     if (!game) {
@@ -158,6 +114,14 @@ class GameStore {
     }
     this.players[userId][gid] = { socketId: null };
     return true;
+  }
+
+  removeGame(gameId: string, players: number[]) {
+    Games.deleteGame(gameId);
+    delete this.games[gameId];
+    for (let player of players) {
+      delete this.players[player][gameId];
+    }
   }
 
   getOpenGames() {
@@ -184,6 +148,35 @@ class GameStore {
     }
     this.players[userId][gameId].socketId = socketId;
     Sockets.updateSocket(socketId, userId, gameId);
+  }
+
+  removeSocket(userId: number, gid: string) {
+    console.log(
+      "in game manager calling remove socket: ",
+      userId,
+      " game id: ",
+      gid,
+    );
+    if (this.players[userId] && this.players[userId][gid]) {
+      delete this.players[userId][gid];
+
+      // If user had no more games, clean up further
+      if (Object.keys(this.players[userId]).length === 0) {
+        delete this.players[userId];
+      }
+    }
+
+    // Optional: Check if the game should be ended or cleaned up
+    const game = this.games[gid];
+    if (game) {
+      const remaining = game.players.filter(
+        (p) => this.players[p.userId]?.[gid],
+      );
+      if (remaining.length === 0) {
+        delete this.games[gid];
+        console.log(`Game ${gid} removed due to all players disconnecting`);
+      }
+    }
   }
 
   getTestId(): number {

@@ -18,6 +18,16 @@ export function initSocket(server: HttpServer) {
     // console.log(`here is the id: ${id} and user: ${userId} from the session middleware`)
     const userId = Number(socket.handshake.query.userId);
     const gid = socket.handshake.query.gid;
+
+    if (!gid || gid === "lobby") {
+      // LOBBY CONNECTION
+      console.log(`User ${userId} connected to the lobby`);
+      socket.join("lobby");
+      io!.to("lobby").emit("lobby-message", `User ${userId} joined the lobby`);
+
+      return;
+    }
+
     if (!gid || typeof gid !== "string") {
       console.log("error with gid undefined in socket connection");
       return;
@@ -72,6 +82,20 @@ export function initSocket(server: HttpServer) {
           message: "That move is not allowed right now.",
         });
       }
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log(`Socket ${socket.id} disconnected: ${reason}`);
+
+      // Step 1: Find the userId and gid (gameId) from your gameManager
+      const gid = socket.handshake.query.gid as string;
+      const userId = Number(socket.handshake.query.userId);
+
+      // Step 2: Remove or mark the player as disconnected
+      gameManager.removeSocket(userId, gid); // You'll define this
+
+      // Step 3: Optionally, notify other players
+      io!.to(gid).emit("player-disconnected", { userId });
     });
   });
 }

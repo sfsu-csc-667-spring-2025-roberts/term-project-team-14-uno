@@ -158,6 +158,87 @@ socket.on("wild-selection", (data) => {
   }, 10000);
 });
 
+socket.on("turn-skip", (data) => {
+  const string = data;
+
+  const gc = document.querySelector(".game-container");
+  if (!gc) return;
+
+  // Create modal container
+  const modal = document.createElement("div");
+  modal.classList.add("modal");
+  const header = document.createElement("h1");
+  header.innerText = `Your turn was skipped. ${string}`;
+  modal.appendChild(header);
+
+  gc.appendChild(modal);
+
+  // Remove modal after 3 seconds
+  setTimeout(() => {
+    modal.remove();
+  }, 10000);
+});
+
+socket.on("reverse", (data) => {
+  const string = data;
+
+  const gc = document.querySelector(".game-container");
+  if (!gc) return;
+
+  // Create modal container
+  const modal = document.createElement("div");
+  modal.classList.add("modal");
+  const header = document.createElement("h1");
+  header.innerText = `Reverse was played. ${string}`;
+  modal.appendChild(header);
+
+  gc.appendChild(modal);
+
+  // Remove modal after 3 seconds
+  setTimeout(() => {
+    modal.remove();
+  }, 10000);
+});
+
+socket.on("win-notification", (data) => {
+  const { winner } = data;
+  const gc = document.querySelector(".game-container");
+  if (!gc) return;
+
+  const myUserId = userId;
+  const message =
+    winner.userId === myUserId
+      ? "🎉 You won the game! 🎉"
+      : `${winner.username ?? "A player"} has won the game.`;
+
+  // Create modal
+  const modal = document.createElement("div");
+  modal.classList.add("modal");
+
+  const header = document.createElement("h1");
+  header.innerText = message;
+  modal.appendChild(header);
+
+  // Exit button
+  const exitBtn = document.createElement("button");
+  exitBtn.innerText = "Exit Game";
+  exitBtn.style.backgroundColor = "red";
+  exitBtn.style.color = "white";
+  exitBtn.style.padding = "1rem 2rem";
+  exitBtn.style.fontSize = "1.5rem";
+  exitBtn.style.border = "none";
+  exitBtn.style.borderRadius = "0.5rem";
+  exitBtn.style.marginTop = "2rem";
+  exitBtn.style.cursor = "pointer";
+  exitBtn.addEventListener("click", () => {
+    socket.disconnect();
+    window.location.href = "/";
+  });
+
+  modal.appendChild(exitBtn);
+  gc.appendChild(modal);
+});
+
 const main = async () => {
   // draw_decks_container()
   // let res = await fetch("gs.json")
@@ -573,6 +654,12 @@ function isValidCard(card: Card): boolean {
   }
   if (gameState.topCard === null) {
     return true;
+  }
+  if (
+    card.type === CardType.REGULAR &&
+    gameState?.topCard?.type !== CardType.REGULAR
+  ) {
+    return card.color === gameState.topCard.color;
   }
   return (
     card.value === gameState.topCard.value ||
