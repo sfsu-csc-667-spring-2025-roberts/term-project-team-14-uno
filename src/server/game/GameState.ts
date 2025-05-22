@@ -73,11 +73,11 @@ class GameState {
   }
 
   update(action: Action) {
-    console.log("in update");
+    console.log("in update with action: ", action);
     switch (this.state) {
       case "wait":
         console.log("in wait");
-        if (action.type === "play" && action.card && action.cardIndex) {
+        if (action.type === "play" && action.card && action.cardIndex != null) {
           this.state = "play";
           const cardPlayed: Card | null = this.handleCardPlay(
             action.card,
@@ -85,9 +85,11 @@ class GameState {
             action.playerId,
             action.wildColor ? action.wildColor : null,
           );
+          console.log("the card played was: ", cardPlayed);
           console.log("after card played");
           if (!cardPlayed) {
             // handle error
+            console.log("in update this is not a card played...");
           } else {
             // it has to be non null now
             if (!this.topCard) {
@@ -95,6 +97,10 @@ class GameState {
                 "somehow top card undefined after successful card play",
               );
             }
+            console.log(
+              "**ok it seems play was correct now top card is:  ",
+              this.topCard,
+            );
             console.log(
               "about to call topCard to db type top is: ",
               typeof this.topCard,
@@ -203,6 +209,7 @@ class GameState {
 
       // this indicates it is a wild draw 4
       if (card.value === 4) {
+        console.log("it is a draw 4 card");
         // first notify skipped player of draw
         const player = this.incrementTurn();
         let nextPlayerSocket =
@@ -245,14 +252,15 @@ class GameState {
           this.deck.pop()!,
           this.deck.pop()!,
         ];
-        Game.updateCards(
-          drawnCards.map((card) => {
-            const db_card = card.toCardDB();
-            db_card.owner_id = this.players[player].userId;
-            db_card.location = "hand";
-            return db_card;
-          }),
-        );
+        const mapped_cards: CardDB[] = drawnCards.map((card) => {
+          const db_card = card.toCardDB();
+          db_card.owner_id = this.players[player].userId;
+          db_card.game_id = this.gameId;
+          db_card.location = "hand";
+          return db_card;
+        });
+        console.log("result of mapped cards for draw 4: ", mapped_cards);
+        Game.updateCards(mapped_cards);
         this.players[player].hand.push(...drawnCards);
       } else {
         // it is a normal wild card
@@ -289,9 +297,8 @@ class GameState {
       return true;
     }
     return (
-      card.value !== this.topCard!.value ||
-      card.color !== this.topCard!.color ||
-      card.type !== this.topCard!.type ||
+      card.value === this.topCard!.value ||
+      card.color === this.topCard!.color ||
       card.type === CardType.WILD
     );
   }

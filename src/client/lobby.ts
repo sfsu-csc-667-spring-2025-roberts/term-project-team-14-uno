@@ -1,4 +1,4 @@
-const username = getOrCreateUsername();
+const username = generateRandomId();
 
 export interface GameStateDB {
   game_id: string;
@@ -38,6 +38,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       `;
 
       container.appendChild(card);
+
+      // add the user current games
     }
   } catch (err) {
     alert("Failed to load open games.");

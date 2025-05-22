@@ -233,7 +233,7 @@ const updateCards = async (cards: CardDB[]): Promise<boolean> => {
   const valuesClause = cards
     .map(
       (_, i) =>
-        `($${i * 9 + 1}, $${i * 9 + 2}, $${i * 9 + 3}, $${i * 9 + 4}, $${i * 9 + 5}, $${i * 9 + 6}, $${i * 9 + 7}, $${i * 9 + 8}, $${i * 9 + 9})`,
+        `($${i * 9 + 1}::uuid, $${i * 9 + 2}, $${i * 9 + 3}, $${i * 9 + 4}, $${i * 9 + 5}, $${i * 9 + 6}, $${i * 9 + 7}, $${i * 9 + 8}, $${i * 9 + 9})`,
     )
     .join(",\n");
 
@@ -367,6 +367,22 @@ const getOpenGames = async (): Promise<GameStateDB[]> => {
   }
 };
 
+const getUserGames = async (userId: number): Promise<GameStateDB[]> => {
+  const query = `
+  SELECT g.*
+  FROM games g
+  JOIN players p ON g.id = p.game_id
+  WHERE p.user_id = $1
+`;
+  try {
+    const res = await db.any(query, [userId]);
+    return res;
+  } catch (error) {
+    console.log(`error fetching open games for user ${userId}: `, error);
+    return [];
+  }
+};
+
 const quickCheckHelperInit = (gameState: GameDB) => {
   console.log("***HELPER CHECK***");
   const game = gameState.game;
@@ -392,6 +408,7 @@ export default {
   addGameRecord,
   serializeGame,
   getGames,
+  getUserGames,
   updateGame,
   getPlayers,
   getCards,

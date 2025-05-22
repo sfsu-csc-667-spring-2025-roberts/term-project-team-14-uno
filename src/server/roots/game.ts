@@ -5,6 +5,8 @@ import { getIO } from "../socket/socket";
 import { Action } from "../game/GameState";
 
 import User from "../db/user/index";
+import Game from "../db/game/index";
+import { GameStateDB, GameDB } from "../db/game/GameDbType";
 
 const router = express.Router();
 
@@ -62,37 +64,32 @@ router.post("/join-game", async (req, res) => {
   res.json({ success: true, gid, userId: userId });
 });
 
-// router.post("/join", async (req, res) => {
-//   const { username } = req.body;
-//   // temporarily create user
-//   const userId = await User.register(username, "12345");
-//   if (!userId || typeof userId !== "number") {
-//     res.status(500).json({ success: false, msg: "you are not logged in" });
-//     return;
-//   }
-//   // // @ts-ignore
-//   // const userId = req.session.userId
-//   // // @ts-ignore
-//   // const username = req.session.username
-//   if (!userId || !username) {
-//     res.status(401).json({ success: false, msg: "you are not logged in" });
-//     return;
-//   }
-//   // console.log("gm before: ", gameManager);
-//   const gameId = gameManager.joinGame(Number(userId), username);
-//   if (!gameId) {
-//     res.status(500).json({ success: false, msg: "error joining a game" });
-//     return;
-//   }
-//   // console.log("gm after: ", gameManager);
-//   // console.log("now game state is: ", gameManager.games[gameId]);
+router.get("/games/:userId", async (req, res) => {
+  // // @ts-ignore
+  // const userId = req.session.userId
+  // // @ts-ignore
+  // const username = req.session.username
+  // const username = "hellomiles";
+  // const userId = await User.register(username, "12345");
+  const userId = req.params.userId;
+  // const userId = 141
+  if (!userId || typeof userId !== "number") {
+    res.status(500).json({ success: false, msg: "you are not logged in" });
+    return;
+  }
 
-//   res.json({ success: true, gid: gameId, userId: userId });
-// });
+  try {
+    const games = Game.getUserGames(userId);
+    res.json({ success: true, games: games });
+  } catch (error) {
+    res.json({ success: false });
+  }
+});
 
 router.post("/play-card", (req, res) => {
   const { userId, gid, action } = req.body;
   const typedAction = action as Action;
+  console.log("in play card route handle with action: ", typedAction);
   if (!userId || !gid || !typedAction) {
     res.status(401).json({ success: false, msg: "you are not logged in" });
     return;

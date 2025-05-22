@@ -7,7 +7,7 @@ import Card, { CardType } from "./Card";
 
 // constant and global vars
 const scaling_factor = 0.5; //for card size
-let gameState = null; // state of uno game from server
+let gameState: PlayerGameState | null = null; // state of uno game from server
 const params = new URLSearchParams(window.location.search);
 const gid = params.get("gid");
 const userId = params.get("pid");
@@ -67,6 +67,7 @@ socket.on("state-update", (data) => {
   ) {
     console.log("in here in state update");
     // console.log("data: ", data);
+    if (!gameState) return;
     if (gameState.turn === 0) {
       draw_el_disabled = false;
     }
@@ -299,10 +300,17 @@ function draw_player_hand(cards: Card[], player_div: HTMLDivElement) {
         "deg)";
     });
     // TEST ANIMATE
-    div.addEventListener("click", () => {
-      if (!play_card(cards[i], i, undefined)) {
-        console.log("Card played");
+    div.addEventListener("click", async () => {
+      let color: string | undefined = undefined;
+      if (!isValidCard(cards[i]) || !(gameState!.turn === 0)) {
+        console.log("issue playing card, not executed");
         return;
+      } else {
+        if (cards[i].type === CardType.WILD) {
+          // handle wild selection
+          color = await handleWildChoice();
+          console.log("color is: ", color);
+        }
       }
       const rect = div.getBoundingClientRect();
       console.log(rect);
@@ -337,6 +345,16 @@ function draw_player_hand(cards: Card[], player_div: HTMLDivElement) {
           abs_card.remove();
         });
       }, 50);
+
+      // server play card
+      (async () => {
+        console.log("in the async is color defined? ", color);
+        const success = await play_card(cards[i], i, color);
+        if (!success) {
+          console.warn("Server rejected card play");
+          // Optional: rollback UI or notify user here
+        }
+      })();
     });
   }
 }
@@ -510,18 +528,19 @@ async function play_card(
   cardIndex: number,
   color: string | undefined,
 ) {
-  if (!(gameState!.turn === 0)) {
-    //show invalid
-    return false;
-  }
-  if (!isValidCard(card)) {
-    //show invalid?
-    return false;
-  }
-  if (card.type === CardType.WILD) {
-    // handle wild selection
-    color = await handleWildChoice();
-  }
+  // if (!(gameState!.turn === 0)) {
+  //   //show invalid
+  //   return false;
+  // }
+  // if (!isValidCard(card)) {
+  //   //show invalid?
+  //   return false;
+  // }
+  // if (card.type === CardType.WILD) {
+  //   // handle wild selection
+  //   color = await handleWildChoice();
+  // }
+  console.log("in play card: ", card);
   let action: Action;
   action = {
     type: "play",
@@ -547,8 +566,19 @@ async function play_card(
   }
 }
 
-function isValidCard(card: Card) {
-  return true;
+function isValidCard(card: Card): boolean {
+  if (!gameState) {
+    console.log("game state not defined");
+    return false;
+  }
+  if (gameState.topCard === null) {
+    return true;
+  }
+  return (
+    card.value === gameState.topCard.value ||
+    card.color === gameState.topCard.color ||
+    card.type === CardType.WILD
+  );
 }
 
 function handleWildChoice(): Promise<string> {
@@ -601,7 +631,7 @@ function draw_decks_container() {
   gc.appendChild(deck);
 }
 
-function draw_decks(topCard: Card) {
+function draw_decks(topCard: Card | null) {
   console.log("drawing decks");
   draw_pile();
   discard_pile(topCard);
@@ -628,7 +658,7 @@ function draw_pile() {
   div.addEventListener("click", mainPlayerDraw);
   deck_div.appendChild(div);
 }
-function discard_pile(topCard: Card) {
+function discard_pile(topCard: Card | null) {
   // const deck_div = document.querySelector(".discard")
   console.log("in discard pile");
   const deck_div = document.querySelector(".deck");
