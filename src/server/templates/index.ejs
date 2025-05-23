@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome</title>
+    <link rel="stylesheet" href="/css/lobby.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 </head>
-<link rel="stylesheet" href="/css/lobby.css">
 
 <body>
     <nav>
@@ -42,26 +43,27 @@
             <li><a href="/faq">FAQ</a></li>
         </ul>
     </nav>
-    <h1>Welcome to the Uno Lobby!</h1>
     <div class="layout chat-closed">
         <div class="open-chat" title="Open chat">‹</div>
         <div class="container">
+            <h1>Welcome to the Uno Lobby!</h1>
             <!-- <div class="card">
             <img src="/card_img/card_back.svg" alt="">
         </div>
         <button class="start">Start Game!</button> -->
-            <div class="start-game">
-                <div class="header-container">
-                    <h2>Start New Game</h2>
+            <div class="inner-container">
+                <div class="card">
+                    <div class="header-container">
+                        <h2>Start New Game</h2>
+                    </div>
+                    <p>Start your own Uno game. Click start to enter a brand new game, other players will eventually
+                        join!
+                    </p>
+                    <button class="btn start-btn">Start Game</button>
                 </div>
-                <p>Start your own Uno game. Click start to enter a brand new game, other players will eventually join!
-                </p>
-                <button class="start-btn">Start Game</button>
             </div>
-            <div class="join-game">
-                <div class="header-container">
-                    <h2>Join a Waiting Game</h2>
-                </div>
+            <h2>Join a Waiting Game</h2>
+            <div class="inner-container join-game-container">
             </div>
             <div class="user-games">
                 <div class="header-container">
@@ -75,8 +77,12 @@
             </div>
             <div class="chat__messages"></div>
             <div class="chat__post">
-                <input type="text" name="chat-post" id="chat-post">
-                <button id="chat-submit">Submit</button>
+                <input type="text" name="chat-post" id="chat-post" placeholder="write a message...">
+                <!-- <textarea id="chat-post" placeholder="Write a message ..."></textarea> -->
+                <!-- <button id="chat-submit">Submit</button> -->
+                <button id="chat-submit" title="Send">
+                    <span class="material-symbols-outlined">send</span>
+                  </button>
             </div>
         </div>
     </div>

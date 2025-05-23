@@ -15,6 +15,7 @@ router.post("/new-game", async (req, res) => {
   // const userId = req.session.userId
   // // @ts-ignore
   // const username = req.session.username
+  const game_name = req.body.gid;
   const username = "hellomiles";
   const userId = await User.register(username, "12345");
   // const userId = 141
@@ -27,7 +28,7 @@ router.post("/new-game", async (req, res) => {
     return;
   }
 
-  const gameId = gameManager.newGame(Number(userId), username);
+  const gameId = gameManager.newGame(Number(userId), username, game_name);
   if (!gameId) {
     res.status(500).json({ success: false, msg: "error joining a game" });
     return;

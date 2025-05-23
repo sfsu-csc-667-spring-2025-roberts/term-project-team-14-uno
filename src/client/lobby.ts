@@ -46,7 +46,7 @@ export interface GameStateDB {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const container = document.querySelector(".join-game");
+  const container = document.querySelector(".join-game-container");
   if (!container) return;
 
   try {
@@ -63,17 +63,25 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     for (let game of resJson as GameStateDB[]) {
       const card = document.createElement("div");
-      card.classList.add("game-card");
+      card.classList.add("card");
+
+      // card.innerHTML = `
+      //   <div class="game-info">
+      //     <p><strong>Game ID:</strong> ${game.game_id}</p>
+      //     <p><strong>Players:</strong> ${game.num_players}</p>
+      //     <p><strong>State:</strong> ${game.state}</p>
+      //     <p><strong>Turn:</strong> ${game.turn}</p>
+      //   </div>
+      //   <button class="join-button" data-game-id="${game.game_id}">Join Game</button>
+      // `;
 
       card.innerHTML = `
-        <div class="game-info">
-          <p><strong>Game ID:</strong> ${game.game_id}</p>
-          <p><strong>Players:</strong> ${game.num_players}</p>
-          <p><strong>State:</strong> ${game.state}</p>
-          <p><strong>Turn:</strong> ${game.turn}</p>
-        </div>
-        <button class="join-button" data-game-id="${game.game_id}">Join Game</button>
-      `;
+      <div class="header-container">
+                    <h2>Join a waiting game "${game.game_id}"</h2>
+                </div>
+                <p>${game.num_players} players haven't started yet.
+                </p>
+                <button class="btn join-btn" data-game-id="${game.game_id}">Join Game</button>`;
 
       container.appendChild(card);
 
@@ -86,7 +94,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   container.addEventListener("click", async (e) => {
     const target = e.target as HTMLElement;
-    if (target.classList.contains("join-button")) {
+    if (target.classList.contains("join-btn")) {
       const gameId = target.dataset.gameId;
       console.log(`Joining game ${gameId}`);
       try {
@@ -143,9 +151,12 @@ document.querySelector(".open-chat")!.addEventListener("click", () => {
     layout.classList.remove("chat-closed");
 
     chat_button.innerHTML = "›";
-    const rect = chat.getBoundingClientRect();
-    const chat_button_offset_from_right = window.innerWidth - rect.left;
-    chat_button.style.right = `${chat_button_offset_from_right}px`;
+    const layout_rect = layout.getBoundingClientRect();
+    const chat_rect = chat.getBoundingClientRect();
+
+    const offset = layout_rect.right - chat_rect.left;
+    chat_button.style.right = `${offset}px`;
+    chat_button.style.right = `${offset}px`;
   } else {
     chat.classList.add("hidden");
     layout.classList.add("chat-closed");

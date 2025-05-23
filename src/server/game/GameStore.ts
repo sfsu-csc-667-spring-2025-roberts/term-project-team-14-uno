@@ -89,8 +89,8 @@ class GameStore {
     }
   }
 
-  newGame(userId: number, username: string) {
-    const gs = new GameState(String(GameStore.getGameId()));
+  newGame(userId: number, username: string, gid: string | null) {
+    const gs = new GameState(gid ? gid : String(GameStore.getGameId()));
     gs.addPlayer(userId, username);
     this.games[gs.gameId] = gs;
     if (!this.players[userId]) {
