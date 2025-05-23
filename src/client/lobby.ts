@@ -170,9 +170,11 @@ document
     e.preventDefault();
     const gameName = (document.getElementById("game-name") as HTMLInputElement)
       .value;
-    const systemPlayers = parseInt(
-      (document.getElementById("system-players") as HTMLSelectElement).value,
-    );
+    //unimplemented feature
+    // const systemPlayers = parseInt(
+    //   (document.getElementById("system-players") as HTMLSelectElement).value,
+    // );
+    const systemPlayers = 0;
 
     try {
       const res = await fetch("/api/game/new-game", {

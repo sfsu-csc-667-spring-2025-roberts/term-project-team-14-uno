@@ -347,31 +347,35 @@ function draw_player_hand(cards: Card[], player_div: HTMLDivElement) {
     div.appendChild(img);
     hand.appendChild(div);
 
-    if (cards.length < 2) continue;
+    if (cards.length >= 2) {
+      rot = i * d_angle - graphics_spec.hand.fan / 2;
 
-    rot = i * d_angle - graphics_spec.hand.fan / 2;
+      d_x =
+        (i * (w_hand - w_card)) / (cards.length - 1) +
+        (cards.length * w_card - w_hand) / 2 -
+        i * w_card;
 
-    d_x =
-      (i * (w_hand - w_card)) / (cards.length - 1) +
-      (cards.length * w_card - w_hand) / 2 -
-      i * w_card;
+      rot_more = Math.abs(rot);
+      rot_less = Math.max(0, rot_more - d_angle);
+      d_y =
+        (h_card / 2) * Math.cos(rot_less * rad_deg) +
+        (w_card / 2) * Math.sin(rot_less * rad_deg) -
+        ((h_card / 2) * Math.cos(rot_more * rad_deg) -
+          (w_card / 2) * Math.sin(rot_more * rad_deg));
 
-    rot_more = Math.abs(rot);
-    rot_less = Math.max(0, rot_more - d_angle);
-    d_y =
-      (h_card / 2) * Math.cos(rot_less * rad_deg) +
-      (w_card / 2) * Math.sin(rot_less * rad_deg) -
-      ((h_card / 2) * Math.cos(rot_more * rad_deg) -
-        (w_card / 2) * Math.sin(rot_more * rad_deg));
-
-    div.style.transform =
-      "translate(" +
-      Math.round(d_x) +
-      "px," +
-      Math.round(d_y) +
-      "px) rotate(" +
-      rot +
-      "deg)";
+      div.style.transform =
+        "translate(" +
+        Math.round(d_x) +
+        "px," +
+        Math.round(d_y) +
+        "px) rotate(" +
+        rot +
+        "deg)";
+    } else {
+      d_x = 0;
+      d_y = 0;
+      rot = 0;
+    }
 
     // Add event listeners for hover effect
     div.addEventListener("mouseenter", () => {
