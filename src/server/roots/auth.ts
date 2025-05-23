@@ -45,9 +45,13 @@ router.get("/logout", async (req: Request, res: Response) => {
 
 router.get("/session", async (req: Request, res: Response) => {
   // @ts-ignore
-  const userId = req.session?.userId;
+  let userId = req.session?.userId;
   // @ts-ignore
-  const username = req.session?.username;
+  let username = req.session?.username;
+
+  //this is for testing
+  userId = 111;
+  username = "miles@gmail.com";
 
   if (userId) {
     res.json({ userId, username });

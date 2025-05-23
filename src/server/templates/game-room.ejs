@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="/css/game.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 </head>
-<link rel="stylesheet" href="/css/game.css">
 <!-- <script src="/socket.io/socket.io.js"></script> -->
 
 <!-- <body onload="main()"> -->
@@ -16,13 +17,14 @@
         </div>
         <div class="chat">
             <div class="chat__header">
-                <h3>Chat Messages</h1>
-                <div class="close-chat">X</div>
+                <h3>Chat Messages</h3>
             </div>
             <div class="chat__messages"></div>
             <div class="chat__post">
-                <input type="text" name="chat-post" id="chat-post">
-                <button id="chat-submit">Submit</button>
+                <input type="text" name="chat-post" id="chat-post" placeholder="write a message...">
+                <button id="chat-submit" title="Send">
+                    <span class="material-symbols-outlined">send</span>
+                </button>
             </div>
         </div>
     </div>

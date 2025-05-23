@@ -1,7 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=Onest:wght@100..900&display=swap");
+
 :root {
   --scaling-factor: 0.5;
   --deck-width: 250px;
   --deck-height: 200px;
+  font-family: "Onest", sans-serif;
 }
 
 body,
@@ -143,14 +146,13 @@ html {
   color: white;
 }
 
-.hidden {
-  display: none;
-}
-
 .chat {
   background-color: #fff;
+  height: 100%;
   display: grid;
   grid-template-rows: 5% 85% 10%;
+  /* border: 1px solid rgba(128, 128, 128, 0.3); */
+  border: 1px solid gray;
   /* height: 100vh; */
 }
 
@@ -161,6 +163,12 @@ html {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background-color: gray;
+}
+.chat__header h3 {
+  color: white;
+  font-weight: 400;
+  /* letter-spacing: 0.25em; */
 }
 
 .chat__messages {
@@ -173,10 +181,54 @@ html {
 
 .chat__post {
   width: 100%;
-  border-top: 1px solid gray;
+  padding: 0 1rem;
+  /* border-top: 1px solid gray; */
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.chat__post input {
+  flex: 1;
+  padding: 0.4rem 0.75rem 1.25rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background-color: rgb(234, 234, 234);
+  color: #333;
+  outline: none;
+  margin-right: 0.5rem;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.chat__post input::placeholder {
+  color: #888;
+  font-style: italic;
+}
+
+.chat__post input:focus {
+  box-shadow: 0 0 0 2px #1a73e8;
+}
+
+#chat-submit {
+  background-color: #32b4f6; /* Google blue */
+  border: none;
+  border-radius: 50%;
+  padding: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+#chat-submit .material-symbols-outlined {
+  color: white;
+  font-size: 24px;
+  line-height: 1;
+}
+
+#chat-submit:hover {
+  background-color: #4796fc; /* darker blue on hover */
 }
 
 .chat__msg {
@@ -192,10 +244,10 @@ html {
   aspect-ratio: 100/100;
   background-color: black;
   border-radius: 50%;
-  /* margin: 0 0.5rem; */
+  margin: 0 0.15rem;
 }
 .chat__msg-user {
-  /* margin: 0 0.5rem; */
+  margin: 0 0.15rem;
   text-decoration: underline;
   cursor: pointer;
 }
@@ -231,4 +283,8 @@ html {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.hidden {
+  display: none;
 }

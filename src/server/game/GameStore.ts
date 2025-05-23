@@ -126,9 +126,11 @@ class GameStore {
 
   async getOpenGames(userId: number | null) {
     let games = await Games.getOpenGames();
+    console.log("get open games: ", games);
     if (userId) {
       games = games.filter((game) => {
         const gameState = this.games[game.game_id];
+        console.log("game state in filter: ", gameState);
         const players = gameState.players;
         const currentPlayerFound = players.findIndex(
           (player) => player.userId === userId,
@@ -169,11 +171,18 @@ class GameStore {
       gid,
     );
     if (this.players[userId] && this.players[userId][gid]) {
-      delete this.players[userId][gid];
+      if (
+        this.games[gid] &&
+        (this.games[gid].state === "wait" || this.games[gid].state === "play")
+      ) {
+        // do nothing
+      } else {
+        delete this.players[userId][gid];
 
-      // If user had no more games, clean up further
-      if (Object.keys(this.players[userId]).length === 0) {
-        delete this.players[userId];
+        // If user had no more games, clean up further
+        if (Object.keys(this.players[userId]).length === 0) {
+          delete this.players[userId];
+        }
       }
     }
 

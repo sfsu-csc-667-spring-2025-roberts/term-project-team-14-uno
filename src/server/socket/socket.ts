@@ -58,34 +58,6 @@ export function initSocket(server: HttpServer) {
       );
     }
 
-    // socket.on("game-state", (gid, userId) => {
-    //   console.log("in game state");
-    //   const playerState = gameManager.games[gid].getPlayerSubset(userId);
-    //   const playerSocket = gameManager.players[userId][gid].socketId;
-    //   if (playerSocket) {
-    //     io!.to(playerSocket).emit("state-update", playerState);
-    //   } else {
-    //     console.log("error finding player in game-state");
-    //   }
-    // });
-
-    // socket.on("play", (data: Action, callback) => {
-    //   console.log(data);
-    //   // const isValid = validateAction(action); // Your logic here
-    //   const isValid = true;
-
-    //   if (isValid) {
-    //     // Process action
-    //     io!.emit("action_broadcast", data); // For example
-    //     callback({ success: true });
-    //   } else {
-    //     callback({
-    //       success: false,
-    //       message: "That move is not allowed right now.",
-    //     });
-    //   }
-    // });
-
     socket.on("disconnect", (reason) => {
       console.log(`Socket ${socket.id} disconnected: ${reason}`);
 

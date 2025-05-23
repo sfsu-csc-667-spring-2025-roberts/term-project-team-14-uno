@@ -54,9 +54,10 @@
 
                     <label for="system-players">System Players:</label>
                     <select id="system-players" name="system-players">
-                        <option value="3" selected>3</option>
+                        <option value="3">3</option>
                         <option value="2">2</option>
                         <option value="1">1</option>
+                        <option value="1" selected>0</option>
                     </select>
 
                     <div class="modal-buttons">
@@ -93,13 +94,11 @@
         </div>
         <div class="chat hidden">
             <div class="chat__header">
-                <h3>Chat Messages</h1>
+                <h3>Chat Messages</h3>
             </div>
             <div class="chat__messages"></div>
             <div class="chat__post">
                 <input type="text" name="chat-post" id="chat-post" placeholder="write a message...">
-                <!-- <textarea id="chat-post" placeholder="Write a message ..."></textarea> -->
-                <!-- <button id="chat-submit">Submit</button> -->
                 <button id="chat-submit" title="Send">
                     <span class="material-symbols-outlined">send</span>
                 </button>

@@ -10,13 +10,17 @@ router.post("/post", async (req: Request, res: Response) => {
   let userId = req.session.userId;
   // @ts-ignore
   let username = req.session.username;
+  const { message, gid } = req.body;
 
   console.log("chat post hit with uid: ", userId, "and username: ", username);
 
+  // this is for testing
   userId = req.body.userId;
-  const { message, gid } = req.body;
+  username = "miles@gmail.com";
+
   if (!message || !userId || !gid) {
     console.log("no chat message or gid or userid");
+    res.status(500).json({ success: false });
     return;
   }
   console.log(
@@ -32,10 +36,11 @@ router.post("/post", async (req: Request, res: Response) => {
     .emit("chat-message", {
       body: message,
       user: {
-        id: userId,
+        id: username,
         username: "someUsername",
       },
     });
+  res.status(200).json({ success: true });
 });
 
 export default router;

@@ -11,6 +11,7 @@ let gameState: PlayerGameState | null = null; // state of uno game from server
 const params = new URLSearchParams(window.location.search);
 const gid = params.get("gid");
 const userId = params.get("pid");
+let session_info: { username?: string; userId?: number } = {};
 const config = {
   angle: 360,
   radius: 30, // percent
@@ -240,19 +241,14 @@ socket.on("win-notification", (data) => {
 });
 
 const main = async () => {
-  // draw_decks_container()
-  // let res = await fetch("gs.json")
-  // res = await res.json()
-  // console.log(res)
-  // gameState = res
-  // draw_decks(gameState.topCard)
-  // draw_players(gameState)
-  console.log("main fn");
   draw_waiting_indicator();
   const chatSubmit = document.getElementById("chat-submit");
   if (chatSubmit) {
     chatSubmit.addEventListener("click", handleChatSubmit);
   }
+  const res = await fetch("/api/auth/session");
+  const resJson = await res.json();
+  session_info = resJson;
 };
 window.addEventListener("load", main);
 
@@ -588,14 +584,17 @@ const draw_player_indicator = (
   const scoreDiv = document.createElement("div");
   scoreDiv.classList.add("indicator__score");
   const scoreText = document.createElement("span");
-  scoreText.innerText = "0";
+  scoreText.innerText = `${gameState?.players[playerIndex].toString()}`;
 
   scoreDiv.appendChild(scoreText);
 
   const playerIdDiv = document.createElement("div");
   playerIdDiv.classList.add("indicator__player");
   const playerText = document.createElement("span");
-  playerText.innerText = "miles1266";
+  playerText.innerText = session_info?.username
+    ? `${session_info?.username}`
+    : "Unknown";
+  playerText.style.fontSize = "clamp(12px, 2vw, 16px)";
 
   playerIdDiv.appendChild(playerText);
 
