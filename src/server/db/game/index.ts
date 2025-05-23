@@ -192,7 +192,7 @@ const getCards = async (gid: string): Promise<CardDB[]> => {
       type: card.type,
       img: card.img,
       location: card.location,
-      owner_id: Number(card.owner_id),
+      owner_id: card.owner_id,
       position: Number(card.position),
     }));
 
@@ -313,7 +313,7 @@ WHERE game_id = $1
       type: card.type,
       img: card.img,
       location: card.location,
-      owner_id: Number(card.owner_id),
+      owner_id: card.owner_id,
       position: Number(card.position),
     };
   } catch (error) {
@@ -336,7 +336,7 @@ const getPlayers = async (gid: string): Promise<PlayerDB[]> => {
       game_id: gid,
       player_index: Number(player.player_index),
       user_id: Number(player.user_id),
-      id: player.uuid,
+      id: player.id,
       username: player.email,
     }));
     return players;

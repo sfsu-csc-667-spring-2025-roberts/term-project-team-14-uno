@@ -58,11 +58,15 @@ class GameStore {
     for (let g of res) {
       players = await Games.getPlayers(g.game_id);
       cards = await Games.getCards(g.game_id);
+      const discard = cards.find((card) => card.id === g.top_card_id);
+      if (!discard) throw new Error("unable to find top card");
+      cards = cards.filter((card) => card.location !== "discard");
+      cards.push(discard);
       game_db = { game: g, players: players, cards: cards };
       gs = GameState.fromSQL(game_db);
       this.games[g.game_id] = gs;
       sockets = await Games.getSockets(g.game_id);
-      console.log("in game store init with sockets: ", sockets);
+      console.log("in game store init with initialized game: ", gs.players);
 
       const socketMap = new Map<number, string>(); // user_id -> socket_id
       sockets.forEach((s) => {
@@ -82,10 +86,6 @@ class GameStore {
       //   const playerSocketId = socketMap.get(player.user_id) ?? null;
       //   this.players[player.user_id.toString()][g.game_id] = {socketId: playerSocketId ? playerSocketId : null }
       // });
-      console.log(
-        "in game store init sockets for players added for a game: ",
-        this.players,
-      );
     }
   }
 

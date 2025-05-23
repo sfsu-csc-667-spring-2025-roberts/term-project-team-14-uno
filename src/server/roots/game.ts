@@ -140,10 +140,11 @@ router.post("/play-card", (req, res) => {
   const isPlay = gameManager.games[gid].update(typedAction);
   console.log("play card: ", gameManager.games[gid].state);
 
-  res.json({ success: true });
+  res.status(200).json({ success: true });
 });
 
 router.post("/draw-card", (req, res) => {
+  // console.log("in draw card")
   // @ts-ignore
   let userId = req.session.userId;
   // @ts-ignore
@@ -152,17 +153,24 @@ router.post("/draw-card", (req, res) => {
   const typedAction = action as Action;
 
   // this is for testing
-  userId = req.body.userId;
+  userId = Number(req.body.userId);
 
   if (!userId || !gid || !typedAction) {
     res.status(401).json({ success: false, msg: "you are not logged in" });
     return;
   }
+  // console.log("gotten here in draw card")
 
   gameManager.games[gid].update(typedAction);
-  console.log("drew card: ", gameManager.games[gid].topCard);
+  // console.log("logging players from rh: ", gameManager.games[gid].players)
+  console.log("drew card: ", gameManager.games[gid].getLastCardInHand(userId));
 
-  res.json({ success: true, card: gameManager.games[gid].topCard });
+  res
+    .status(200)
+    .json({
+      success: true,
+      card: gameManager.games[gid].getLastCardInHand(userId),
+    });
 });
 
 router.post("/state-update", async (req, res) => {
@@ -187,6 +195,25 @@ router.post("/state-update", async (req, res) => {
   // console.log("player state from state update route: ", playerState);
   getIO().to(socket!).emit("state-update", playerState);
   res.status(200).json({ success: true });
+});
+
+router.post("/state-only", async (req, res) => {
+  // @ts-ignore
+  let userId = req.session.userId;
+  // @ts-ignore
+  let username = req.session.username;
+  const { gid } = req.body;
+
+  // this is for testing
+  userId = Number(req.body.userId);
+
+  if (!gid || !userId) {
+    res.status(401).json({ success: false, msg: "error fetching state" });
+  }
+
+  const gs = gameManager.games[gid];
+
+  res.status(200).json({ success: true, state: gs.state });
 });
 
 router.get("/open-games", async (req, res) => {

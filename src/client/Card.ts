@@ -8,7 +8,7 @@ export interface CardDB {
   type: string;
   img: string;
   location: string;
-  owner_id: number | null;
+  owner_id: string | null;
   position: number | null;
 }
 
@@ -19,8 +19,14 @@ class Card {
   color: Color;
   type: CardType;
 
-  constructor(value: number, img: string, color: Color, type: CardType) {
-    this.id = uuidv4();
+  constructor(
+    value: number,
+    img: string,
+    color: Color,
+    type: CardType,
+    id: string | null = null,
+  ) {
+    this.id = id ? id : uuidv4();
     this.value = value;
     this.img = img;
     this.color = color;
@@ -36,7 +42,7 @@ class Card {
       type: this.type,
       img: this.img,
       location: "-1",
-      owner_id: -1,
+      owner_id: null,
       position: -1,
     };
   }

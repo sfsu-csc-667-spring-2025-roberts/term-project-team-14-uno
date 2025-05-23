@@ -21,7 +21,7 @@ export interface CardDB {
   type: string;
   img: string;
   location: string;
-  owner_id: number | null;
+  owner_id: string | null;
   position: number | null;
 }
 

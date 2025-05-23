@@ -63,7 +63,10 @@ class GameState {
       [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
     }
     // distribute cards
-    for (let i = 0; i < this.numPlayers * 7; i++) {
+    // let num_cards_per_hand = 7
+    // this is for testing
+    let num_cards_per_hand = 2;
+    for (let i = 0; i < this.numPlayers * num_cards_per_hand; i++) {
       this.players[i % this.numPlayers].hand.push(this.deck[i]);
     }
     // remove distributed from deck
@@ -111,7 +114,7 @@ class GameState {
             cardForUpdate.game_id = this.gameId;
             cardForUpdate.location = "discard";
             // userId is indeed sent for this property of action on frontend
-            cardForUpdate.owner_id = Number(action.playerId);
+            cardForUpdate.owner_id = player.uuid;
             Game.updateCard(cardForUpdate);
             Game.updateGame(this.serializeOnlyGS());
 
@@ -128,7 +131,7 @@ class GameState {
           } else {
             const updateCard: CardDB = drewCard.toCardDB();
             updateCard.game_id = this.gameId;
-            updateCard.owner_id = Number(action.playerId);
+            updateCard.owner_id = this.players[this.turn].uuid;
             updateCard.location = "hand";
             Game.updateCard(updateCard);
           }
@@ -136,6 +139,7 @@ class GameState {
           this.turn = this.incrementTurn();
           Game.updateGame(this.serializeOnlyGS());
           this.broadcastStateUpdate();
+          console.log("anout to finish the draw block");
         }
         break;
       case "play":
@@ -178,7 +182,7 @@ class GameState {
       Game.updateCards(
         drawnCards.map((card) => {
           const db_card = card.toCardDB();
-          db_card.owner_id = this.players[player].userId;
+          db_card.owner_id = this.players[player].uuid;
           db_card.location = "hand";
           return db_card;
         }),
@@ -264,7 +268,7 @@ class GameState {
         ];
         const mapped_cards: CardDB[] = drawnCards.map((card) => {
           const db_card = card.toCardDB();
-          db_card.owner_id = this.players[player].userId;
+          db_card.owner_id = this.players[player].uuid;
           db_card.game_id = this.gameId;
           db_card.location = "hand";
           return db_card;
@@ -337,6 +341,15 @@ class GameState {
     this.players[idx].hand.push(drewCard);
     console.log("in handle draw, card drawn is: ", drewCard);
     return drewCard;
+  }
+  getLastCardInHand(userId: number): Card | null {
+    // console.log("in get last card in hand")
+    const player = this.players.findIndex((player) => player.userId === userId);
+    // console.log("players: ", this.players, " should have found player: ", player)
+    if (player === -1) {
+      return null;
+    }
+    return this.players[player].hand[this.players[player].hand.length - 1];
   }
 
   handleWinner(player: Player) {
@@ -449,7 +462,7 @@ class GameState {
       type: string;
       location: string;
       position: number | null;
-      owner_id: number | null;
+      owner_id: string | null;
     }[] = this.deck.map((card, idx) => ({
       id: card.id,
       game_id: this.gameId,
@@ -472,7 +485,7 @@ class GameState {
           type: card.type,
           location: "hand",
           position: -1,
-          owner_id: player.userId,
+          owner_id: player.uuid,
         });
       });
     });
@@ -515,16 +528,30 @@ class GameState {
 
   static fromSQL(game: GameDB): GameState {
     const gs = new GameState(game.game.game_id, game.game.num_players);
+    console.log(
+      "starting from sql: ",
+      game.cards.filter((card) => card.location === "discard"),
+    );
 
     gs.state = game.game.state;
     gs.turn = game.game.turn;
     gs.turnIncrement = game.game.turn_increment;
-    gs.topCard = null;
+    const card = game.cards.find((card) => card.id === game.game.top_card_id);
+    if (!card) throw new Error("unable to find top card");
+    gs.topCard = new Card(
+      card.value,
+      card.img,
+      Color[card.color as keyof typeof Color],
+      CardType[card.type as keyof typeof CardType],
+      card.id,
+    );
 
     // 1. Restore players
     gs.players = game.players.map((p, idx) => {
-      return new Player(p.user_id, "", p.player_index); // You may want to load username separately
+      return new Player(p.user_id, "", p.player_index, p.id); // You may want to load username separately
     });
+
+    // console.log("in from sql we now have players: ", gs.players)
 
     // 2. Restore deck & hands
     const deckCards = game.cards
@@ -540,11 +567,17 @@ class GameState {
           card.img,
           Color[card.color as keyof typeof Color],
           CardType[card.type as keyof typeof CardType],
+          card.id,
         ),
     );
+    // console.log("in from sql hand cards: ", handCards)
 
     handCards.forEach((card) => {
-      const player = gs.players.find((p) => p.userId === card.owner_id);
+      // console.log("Comparing owner_id:", card.owner_id);
+      // gs.players.forEach(p => {
+      //   console.log("Player UUID:", p.uuid, "Match:", p.uuid === card.owner_id);
+      // });
+      const player = gs.players.find((p) => p.uuid === card.owner_id);
       if (!player) return;
       player.hand.push(
         new Card(
@@ -552,9 +585,12 @@ class GameState {
           card.img,
           Color[card.color as keyof typeof Color],
           CardType[card.type as keyof typeof CardType],
+          card.id,
         ),
       );
     });
+
+    console.log("about to return in game state with top card: ", gs.topCard);
 
     return gs;
   }

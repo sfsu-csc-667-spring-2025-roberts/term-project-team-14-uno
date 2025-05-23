@@ -241,13 +241,24 @@ socket.on("win-notification", (data) => {
 });
 
 const main = async () => {
-  draw_waiting_indicator();
+  let res = await fetch("/api/game/state-only", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId: userId, gid: gid }),
+  });
+  let resJson = await res.json();
+  console.log(resJson);
+  if (resJson.success && resJson?.state === "uninitialized") {
+    draw_waiting_indicator();
+  } else {
+    draw_decks_container();
+  }
   const chatSubmit = document.getElementById("chat-submit");
   if (chatSubmit) {
     chatSubmit.addEventListener("click", handleChatSubmit);
   }
-  const res = await fetch("/api/auth/session");
-  const resJson = await res.json();
+  res = await fetch("/api/auth/session");
+  resJson = await res.json();
   session_info = resJson;
 };
 window.addEventListener("load", main);
@@ -291,7 +302,7 @@ const draw_players = (gameState: PlayerGameState) => {
     gc.appendChild(div);
     if (i == 0) {
       draw_player_hand(my_hand, div);
-      draw_player_indicator(div, dx, dy, i);
+      draw_player_indicator(div, dx, dy, gameState.myPlayerIdx);
       console.log("about to do select logic");
     } else {
       draw_opponent_hand(gameState.players[i], div);
@@ -322,6 +333,7 @@ function draw_player_hand(cards: Card[], player_div: HTMLDivElement) {
   while (hand.hasChildNodes()) hand.removeChild(hand.firstChild!);
 
   for (let i = 0; i < cards.length; i++) {
+    console.log("drawing player hand");
     let div, img, rot, rot_less, rot_more, d_x, d_y;
 
     div = document.createElement("div");
@@ -378,6 +390,7 @@ function draw_player_hand(cards: Card[], player_div: HTMLDivElement) {
     });
     // TEST ANIMATE
     div.addEventListener("click", async () => {
+      console.log("should be triggering play card");
       let color: string | undefined = undefined;
       if (!isValidCard(cards[i]) || !(gameState!.turn === 0)) {
         console.log("issue playing card, not executed");
@@ -441,16 +454,28 @@ function draw_opponent_hand(numCards: number, player_div: HTMLDivElement) {
   var d_angle = graphics_spec.hand.fan / (numCards - 1);
   let w_card = player_div.getBoundingClientRect().width / 10;
   let h_card = w_card * (93 / 62);
+  console.log("opt1: ", graphics_spec.hand.width);
+  console.log("opt2: ", numCards * w_card - w_card * (numCards / 2));
   var w_hand = Math.min(
     graphics_spec.hand.width,
     numCards * w_card - w_card * (numCards / 2),
   );
+  if (numCards <= 2) {
+    w_hand = w_card * 1.5;
+  }
+  console.log("result: ", w_hand);
   var rad_deg = Math.PI / 180;
   var div, img, rot, rot_less, rot_more, d_x, d_y, i;
 
   while (hand.hasChildNodes()) hand.removeChild(hand.firstChild!);
 
   for (i = 0; i < numCards; i++) {
+    console.log(
+      "in draw opponent hand with player div: ",
+      player_div,
+      " and opponent card num: ",
+      i,
+    );
     div = document.createElement("div");
     div.classList.add("card");
     div.style.width = w_card + "px";
@@ -584,6 +609,12 @@ const draw_player_indicator = (
   const scoreDiv = document.createElement("div");
   scoreDiv.classList.add("indicator__score");
   const scoreText = document.createElement("span");
+  console.log(
+    "this should be the value of index: ",
+    playerIndex,
+    " and the players array: ",
+    gameState?.players,
+  );
   scoreText.innerText = `${gameState?.players[playerIndex].toString()}`;
 
   scoreDiv.appendChild(scoreText);
