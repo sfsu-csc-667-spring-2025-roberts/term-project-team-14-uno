@@ -7,7 +7,7 @@ const router = express.Router();
 router.get("/", authMiddleware, (req, res) => {
   res.render("index");
 });
-router.get("/game", (req, res) => {
+router.get("/game", authMiddleware, (req, res) => {
   res.render("game-room");
 });
 router.get("/register", (req, res) => {

@@ -367,7 +367,7 @@ const getSockets = async (gid: string): Promise<Socket[]> => {
 };
 
 const getOpenGames = async (): Promise<GameStateDB[]> => {
-  const query = "SELECT * FROM games WHERE state='uninitialized'";
+  let query = "SELECT * FROM games WHERE state='uninitialized'";
   try {
     const res = await db.any(query);
     // console.log("games db: ", res);
@@ -382,7 +382,7 @@ const getUserGames = async (userId: number): Promise<GameStateDB[]> => {
   const query = `
   SELECT g.*
   FROM games g
-  JOIN players p ON g.id = p.game_id
+  JOIN players p ON g.game_id = p.game_id
   WHERE p.user_id = $1
 `;
   try {

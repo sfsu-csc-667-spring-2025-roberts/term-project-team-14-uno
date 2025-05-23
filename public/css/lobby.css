@@ -23,6 +23,7 @@ nav {
 
 .logo {
   height: 75%;
+  cursor: pointer;
 }
 
 .logo svg {
@@ -198,7 +199,7 @@ h1 {
 
 .chat {
   background-color: #fff;
-  height: 80%;
+  height: 90vh;
   display: grid;
   grid-template-rows: 5% 85% 10%;
   /* border: 1px solid rgba(128, 128, 128, 0.3); */
@@ -300,6 +301,66 @@ h1 {
   margin: 0 0.15rem;
   text-decoration: underline;
   cursor: pointer;
+}
+
+.modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 1rem;
+  border-radius: 1px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+
+  animation: slideInFromTop 0.4s ease-out;
+}
+
+.modal__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal h2 {
+  text-align: center;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.modal button {
+  display: block;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background-color: #016cb4;
+  color: white;
+  cursor: pointer;
+}
+
+.modal input {
+  border: none;
+  background-color: rgb(239, 239, 239);
+  padding: 0.5rem;
+  height: 40px;
+  border-radius: 4px;
+  width: 100%;
+  margin: 3px 0 20px;
+  color: rgb(57, 60, 65);
+}
+
+.modal select {
+  padding: 0.5rem;
 }
 
 .hidden {

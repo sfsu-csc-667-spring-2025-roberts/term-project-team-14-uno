@@ -36,7 +36,7 @@ class GameState {
   numPlayers: number;
   topCard: Card | null;
 
-  constructor(gameId: string, numPlayers: number = 4) {
+  constructor(gameId: string, numPlayers: number = 4, numSystemPlayers = 0) {
     this.gameId = gameId;
     this.deck = deck.map(
       (card) =>

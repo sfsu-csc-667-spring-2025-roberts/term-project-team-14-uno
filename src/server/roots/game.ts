@@ -11,14 +11,28 @@ import { GameStateDB, GameDB } from "../db/game/GameDbType";
 const router = express.Router();
 
 router.post("/new-game", async (req, res) => {
-  // // @ts-ignore
-  // const userId = req.session.userId
-  // // @ts-ignore
-  // const username = req.session.username
-  const game_name = req.body.gid;
-  const username = "hellomiles";
-  const userId = await User.register(username, "12345");
-  // const userId = 141
+  // @ts-ignore
+  let userId = req.session.userId;
+  // @ts-ignore
+  let username = req.session.username;
+  const options = req.body;
+  console.log(
+    "in new game with uid: ",
+    userId,
+    " username: ",
+    username,
+    " and options: ",
+    options,
+  );
+  // const game_name = req.body.gid;
+  // username = "hellomiles";
+  // userId = await User.register(username, "12345");
+  if (!userId || !username || !options || !options.gameName) {
+    console.log("something wasnt defined in new game");
+    res.status(500).json({ success: false, msg: "you are not logged in" });
+    return;
+  }
+
   if (!userId || typeof userId !== "number") {
     res.status(500).json({ success: false, msg: "you are not logged in" });
     return;
@@ -28,7 +42,11 @@ router.post("/new-game", async (req, res) => {
     return;
   }
 
-  const gameId = gameManager.newGame(Number(userId), username, game_name);
+  const gameId = gameManager.newGame(
+    Number(userId),
+    username,
+    options.gameName,
+  );
   if (!gameId) {
     res.status(500).json({ success: false, msg: "error joining a game" });
     return;
@@ -38,22 +56,32 @@ router.post("/new-game", async (req, res) => {
 });
 
 router.post("/join-game", async (req, res) => {
-  const { username, gid } = req.body;
+  // @ts-ignore
+  let userId = req.session.userId;
+  // @ts-ignore
+  let username = req.session.username;
+  username = req.body.username;
+  const gid = req.body.gid;
+
   // temporarily create user
-  const userId = await User.register(username, "12345");
+  userId = await User.register(username, "12345");
+
   if (!userId || typeof userId !== "number") {
     res.status(500).json({ success: false, msg: "you are not logged in" });
     return;
   }
-  // // @ts-ignore
-  // const userId = req.session.userId
-  // // @ts-ignore
-  // const username = req.session.username
   if (!userId || !username || !gid) {
     res.status(401).json({ success: false, msg: "you are not logged in" });
     return;
   }
-  // console.log("gm before: ", gameManager);
+  // player already in game
+  if (
+    gameManager.games[gid].players.filter((player) => player.userId === userId)
+      .length === 1
+  ) {
+    res.json({ success: true, gid, userId: userId });
+    return;
+  }
   const gameId = gameManager.joinSpecificGame(Number(userId), username, gid);
   if (!gameId) {
     res.status(500).json({ success: false, msg: "error joining a game" });
@@ -65,14 +93,14 @@ router.post("/join-game", async (req, res) => {
   res.json({ success: true, gid, userId: userId });
 });
 
-router.get("/games/:userId", async (req, res) => {
-  // // @ts-ignore
-  // const userId = req.session.userId
-  // // @ts-ignore
-  // const username = req.session.username
+router.get("/my-active", async (req, res) => {
+  // @ts-ignore
+  let userId = req.session.userId;
+  // @ts-ignore
+  let username = req.session.username;
   // const username = "hellomiles";
   // const userId = await User.register(username, "12345");
-  const userId = req.params.userId;
+  // userId = req.params.userId;
   // const userId = 141
   if (!userId || typeof userId !== "number") {
     res.status(500).json({ success: false, msg: "you are not logged in" });
@@ -80,7 +108,8 @@ router.get("/games/:userId", async (req, res) => {
   }
 
   try {
-    const games = Game.getUserGames(userId);
+    const games = await Game.getUserGames(userId);
+    console.log("in my active route: ", games);
     res.json({ success: true, games: games });
   } catch (error) {
     res.json({ success: false });
@@ -88,7 +117,13 @@ router.get("/games/:userId", async (req, res) => {
 });
 
 router.post("/play-card", (req, res) => {
-  const { userId, gid, action } = req.body;
+  // @ts-ignore
+  let userId = req.session.userId;
+  // @ts-ignore
+  let username = req.session.username;
+
+  userId = req.body.userId;
+  const { gid, action } = req.body;
   const typedAction = action as Action;
   console.log("in play card route handle with action: ", typedAction);
   if (!userId || !gid || !typedAction) {
@@ -103,7 +138,13 @@ router.post("/play-card", (req, res) => {
 });
 
 router.post("/draw-card", (req, res) => {
-  const { userId, gid, action } = req.body;
+  // @ts-ignore
+  let userId = req.session.userId;
+  // @ts-ignore
+  let username = req.session.username;
+
+  userId = req.body.userId;
+  const { gid, action } = req.body;
   // const {userId, gid} = req.session
   const typedAction = action as Action;
   if (!userId || !gid || !typedAction) {
@@ -118,8 +159,13 @@ router.post("/draw-card", (req, res) => {
 });
 
 router.post("/state-update", async (req, res) => {
+  // @ts-ignore
+  let userId = req.session.userId;
+  // @ts-ignore
+  let username = req.session.username;
+
   const { gid } = req.body;
-  const userId = Number(req.body.userId);
+  userId = Number(req.body.userId);
 
   if (!gid || !userId) {
     res.status(401).json({ success: false, msg: "error fetching state" });
@@ -135,8 +181,13 @@ router.post("/state-update", async (req, res) => {
 });
 
 router.get("/open-games", async (req, res) => {
+  // @ts-ignore
+  let userId = req.session.userId;
+
+  console.log("searching open games with: ", userId);
+
   try {
-    const games = await gameManager.getOpenGames();
+    const games = await gameManager.getOpenGames(userId);
     res.status(200).json(games);
   } catch (error) {
     console.log("error in api route get open games: ", error);

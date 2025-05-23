@@ -6,8 +6,15 @@ import { getIO } from "../socket/socket";
 const router = express.Router();
 
 router.post("/post", async (req: Request, res: Response) => {
-  console.log("chat post hit");
-  const { message, userId, gid } = req.body;
+  // @ts-ignore
+  let userId = req.session.userId;
+  // @ts-ignore
+  let username = req.session.username;
+
+  console.log("chat post hit with uid: ", userId, "and username: ", username);
+
+  userId = req.body.userId;
+  const { message, gid } = req.body;
   if (!message || !userId || !gid) {
     console.log("no chat message or gid or userid");
     return;
@@ -20,10 +27,6 @@ router.post("/post", async (req: Request, res: Response) => {
     " game id: ",
     gid,
   );
-  //   @ts-ignore
-  //   req.session.userId = id;
-  //   //   @ts-ignore
-  //   req.session.username = email;
   getIO()
     .to(gid)
     .emit("chat-message", {

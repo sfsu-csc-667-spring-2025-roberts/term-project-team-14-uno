@@ -43,4 +43,17 @@ router.get("/logout", async (req: Request, res: Response) => {
   });
 });
 
+router.get("/session", async (req: Request, res: Response) => {
+  // @ts-ignore
+  const userId = req.session?.userId;
+  // @ts-ignore
+  const username = req.session?.username;
+
+  if (userId) {
+    res.json({ userId, username });
+  } else {
+    res.status(401).json({ error: "Not authenticated" });
+  }
+});
+
 export default router;

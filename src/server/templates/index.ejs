@@ -45,6 +45,28 @@
     </nav>
     <div class="layout chat-closed">
         <div class="open-chat" title="Open chat">‹</div>
+        <div class="modal hidden">
+            <div class="modal-content">
+                <h2>New Game Options</h2>
+                <form id="new-game-form">
+                    <label for="game-name">Game Name:</label>
+                    <input type="text" id="game-name" name="game-name" required />
+
+                    <label for="system-players">System Players:</label>
+                    <select id="system-players" name="system-players">
+                        <option value="3" selected>3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                    </select>
+
+                    <div class="modal-buttons">
+                        <button type="submit">Start Game</button>
+                        <button class="modal-close" type="button">Cancel</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
         <div class="container">
             <h1>Welcome to the Uno Lobby!</h1>
             <!-- <div class="card">
@@ -65,10 +87,8 @@
             <h2>Join a Waiting Game</h2>
             <div class="inner-container join-game-container">
             </div>
-            <div class="user-games">
-                <div class="header-container">
-                    <h2>Your current active games</h2>
-                </div>
+            <h2>Your current active games</h2>
+            <div class="inner-container active-games-container">
             </div>
         </div>
         <div class="chat hidden">
@@ -82,11 +102,16 @@
                 <!-- <button id="chat-submit">Submit</button> -->
                 <button id="chat-submit" title="Send">
                     <span class="material-symbols-outlined">send</span>
-                  </button>
+                </button>
             </div>
         </div>
     </div>
     <script src="/js/lobby.js"></script>
+    <script>
+        document.querySelector(".logo").addEventListener("click", () => {
+            window.location.href = "/"
+        })
+    </script>
 </body>
 
 </html>

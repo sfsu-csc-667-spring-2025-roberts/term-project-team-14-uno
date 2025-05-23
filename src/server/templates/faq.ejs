@@ -24,6 +24,38 @@
       box-sizing: border-box;
     }
 
+    nav {
+      height: 10vh;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      height: 75%;
+      cursor: pointer;
+    }
+
+    .logo svg {
+      max-height: 100%;
+    }
+
+    ul {
+      margin: 0 1rem;
+      list-style: none;
+    }
+
+    ul li a {
+      text-decoration: none;
+      color: black;
+      padding: 0.25rem 0.5rem;
+      border-radius: 1px;
+    }
+
+    ul li a:hover {
+      background-color: rgb(195, 195, 195);
+    }
+
     .faq-section {
       max-width: 700px;
       margin: 50px auto;
@@ -77,6 +109,39 @@
 </head>
 
 <body>
+  <nav>
+    <div class="logo">
+        <svg width="400" height="150" viewBox="0 0 400 150" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <!-- Gradient Fill -->
+                <linearGradient id="unoFill" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#FF0000" />
+                    <stop offset="100%" stop-color="#FFD700" />
+                </linearGradient>
+
+                <!-- Black outline -->
+                <filter id="outline">
+                    <feMorphology in="SourceAlpha" result="DILATED" operator="dilate" radius="3" />
+                    <feFlood flood-color="black" result="BLACK" />
+                    <feComposite in="BLACK" in2="DILATED" operator="in" result="OUTLINE" />
+                    <feMerge>
+                        <feMergeNode in="OUTLINE" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
+
+            <!-- UNO Letters -->
+            <text x="20" y="110" font-family="'Arial Black', sans-serif" font-size="100" font-style="italic"
+                fill="url(#unoFill)" filter="url(#outline)">
+                UNO
+            </text>
+        </svg>
+    </div>
+    <ul>
+        <li><a href="/faq">FAQ</a></li>
+    </ul>
+</nav>
   <section class="faq-section">
     <h1>Frequently Asked Questions</h1>
 
@@ -87,12 +152,14 @@
 
     <div class="faq-item">
       <button class="faq-question">What do the wild cards do?</button>
-      <div class="faq-answer">The regular wild card allows you to choose a color, while the +4 allows the change of color along with the next player in turn drawing 4 cards.</div>
+      <div class="faq-answer">The regular wild card allows you to choose a color, while the +4 allows the change of
+        color along with the next player in turn drawing 4 cards.</div>
     </div>
 
     <div class="faq-item">
       <button class="faq-question">What if I dont call out UNO?</button>
-      <div class="faq-answer">If someone calls you out on it, draw 4 cards, but if no one notices, then you're good...</div>
+      <div class="faq-answer">If someone calls you out on it, draw 4 cards, but if no one notices, then you're good...
+      </div>
     </div>
 
     <div class="faq-item">
@@ -107,10 +174,16 @@
 
     <div class="faq-item">
       <button class="faq-question">Where can I find the official rules? </button>
-      <div class="faq-answer"><a href="https://www.unorules.org/faq/" target="_blank">https://www.unorules.org/faq/</a></div>
+      <div class="faq-answer"><a href="https://www.unorules.org/faq/" target="_blank">https://www.unorules.org/faq/</a>
+      </div>
     </div>
 
   </section>
+  <script>
+    document.querySelector(".logo").addEventListener("click", () => {
+        window.location.href = "/"
+    })
+</script>
 </body>
 
 </html>

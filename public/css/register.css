@@ -75,3 +75,30 @@ button {
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1rem 0;
+  color: #6b7280; /* Tailwind's gray-500 or customize */
+  font-weight: 500;
+  font-size: 0.875rem; /* small text */
+}
+
+.divider .line {
+  flex: 1;
+  height: 1px;
+  background-color: #e5e7eb; /* Tailwind's gray-200 or customize */
+  margin: 0 0.75rem;
+}
+
+.divider .text {
+  white-space: nowrap;
+}
+
+.create-act {
+  background-color: #dedede;
+  color: rgb(91, 91, 91);
+  font-weight: 550;
+}

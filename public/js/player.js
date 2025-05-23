@@ -268,7 +268,7 @@
   \******************************/
       /***/ (__unused_webpack_module, exports, __webpack_require__) => {
         eval(
-          '\nObject.defineProperty(exports, "__esModule", ({ value: true }));\nconst uuid_1 = __webpack_require__(/*! uuid */ "./node_modules/uuid/dist/cjs-browser/index.js");\nclass Player {\n    constructor(id, username, index) {\n        this.uuid = (0, uuid_1.v4)();\n        this.userId = id;\n        this.username = username;\n        this.index = index;\n        this.hand = [];\n    }\n}\nexports["default"] = Player;\n\n\n//# sourceURL=webpack://term-project-14-uno/./src/client/Player.ts?',
+          '\nObject.defineProperty(exports, "__esModule", ({ value: true }));\nconst uuid_1 = __webpack_require__(/*! uuid */ "./node_modules/uuid/dist/cjs-browser/index.js");\nclass Player {\n    constructor(id, username, index, isSystemPlayer = false) {\n        this.uuid = (0, uuid_1.v4)();\n        this.userId = id;\n        this.username = username;\n        this.index = index;\n        this.hand = [];\n        this.isSystemPlayer = isSystemPlayer;\n    }\n}\nexports["default"] = Player;\n\n\n//# sourceURL=webpack://term-project-14-uno/./src/client/Player.ts?',
         );
 
         /***/

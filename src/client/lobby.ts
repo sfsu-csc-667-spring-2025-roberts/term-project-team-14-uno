@@ -48,44 +48,60 @@ export interface GameStateDB {
 document.addEventListener("DOMContentLoaded", async () => {
   const container = document.querySelector(".join-game-container");
   if (!container) return;
+  const containerActive = document.querySelector(".active-games-container");
+  if (!containerActive) return;
 
   try {
     const res = await fetch("/api/game/open-games");
     const resJson = await res.json();
-    console.log(resJson);
+    console.log("here first");
+
+    const res_active = await fetch("/api/game/my-active");
+    const resActiveJson = await res_active.json();
+    console.log("then here: ", resActiveJson);
 
     if ((resJson as GameStateDB[]).length === 0) {
       const p = document.createElement("p");
       p.innerText = "No open games available right now, start a new game!";
       container.appendChild(p);
-      return;
+    } else {
+      for (let game of resJson as GameStateDB[]) {
+        const card = document.createElement("div");
+        card.classList.add("card");
+
+        card.innerHTML = `
+        <div class="header-container">
+                      <h2>Join a waiting game "${game.game_id}"</h2>
+                  </div>
+                  <p>${game.num_players} players haven't started yet.
+                  </p>
+                  <button class="btn join-btn" data-game-id="${game.game_id}">Join Game</button>`;
+
+        container.appendChild(card);
+      }
     }
 
-    for (let game of resJson as GameStateDB[]) {
-      const card = document.createElement("div");
-      card.classList.add("card");
+    if ((resActiveJson.games as GameStateDB[]).length === 0) {
+      console.log("got here");
+      const p = document.createElement("p");
+      p.innerText =
+        "You have no active games available right now, start a new game!";
+      containerActive.appendChild(p);
+    } else {
+      for (let game of resActiveJson as GameStateDB[]) {
+        const card = document.createElement("div");
+        card.classList.add("card");
 
-      // card.innerHTML = `
-      //   <div class="game-info">
-      //     <p><strong>Game ID:</strong> ${game.game_id}</p>
-      //     <p><strong>Players:</strong> ${game.num_players}</p>
-      //     <p><strong>State:</strong> ${game.state}</p>
-      //     <p><strong>Turn:</strong> ${game.turn}</p>
-      //   </div>
-      //   <button class="join-button" data-game-id="${game.game_id}">Join Game</button>
-      // `;
+        card.innerHTML = `
+        <div class="header-container">
+                      <h2>Enter your active game "${game.game_id}"</h2>
+                  </div>
+                  <p>${game.num_players - 1} currently playing.
+                  </p>
+                  <button class="btn active-btn" data-game-id="${game.game_id}">Join Game</button>`;
 
-      card.innerHTML = `
-      <div class="header-container">
-                    <h2>Join a waiting game "${game.game_id}"</h2>
-                </div>
-                <p>${game.num_players} players haven't started yet.
-                </p>
-                <button class="btn join-btn" data-game-id="${game.game_id}">Join Game</button>`;
-
-      container.appendChild(card);
-
-      // add the user current games
+        container.appendChild(card);
+      }
     }
   } catch (err) {
     alert("Failed to load open games.");
@@ -115,26 +131,70 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
   });
+  containerActive.addEventListener("click", async (e) => {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains("active-btn")) {
+      const gameId = target.dataset.gameId;
+      console.log(`Joining game ${gameId}`);
+      try {
+        const res = await fetch("/api/game/join-game", {
+          method: "post",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, gid: gameId }),
+        });
+        const resJson = await res.json();
+        if (!resJson.success) {
+          alert("Unable to join game. It may be full or unavailable.");
+          return;
+        }
+        window.location.href = `/game?gid=${resJson.gid}&pid=${resJson.userId}`;
+      } catch (err) {
+        alert("Error joining game.");
+        console.error(err);
+      }
+    }
+  });
 });
 
-document.querySelector(".start-btn")!.addEventListener("click", async () => {
-  try {
-    const res = await fetch("/api/game/new-game", {
-      method: "post",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username }),
-    });
-    const resJson = await res.json();
-    if (!resJson.success) {
-      alert("Failed to create new game.");
-      return;
-    }
-    window.location.href = `/game?gid=${resJson.gid}&pid=${resJson.userId}`;
-  } catch (err) {
-    alert("Error creating new game.");
-    console.error(err);
-  }
+document.querySelector(".start-btn")!.addEventListener("click", () => {
+  document.querySelector(".modal")!.classList.remove("hidden");
 });
+
+document.querySelector(".modal-close")!.addEventListener("click", () => {
+  document.querySelector(".modal")!.classList.add("hidden");
+});
+
+document
+  .getElementById("new-game-form")!
+  .addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const gameName = (document.getElementById("game-name") as HTMLInputElement)
+      .value;
+    const systemPlayers = parseInt(
+      (document.getElementById("system-players") as HTMLSelectElement).value,
+    );
+
+    try {
+      const res = await fetch("/api/game/new-game", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gameName,
+          systemPlayers,
+        }),
+      });
+
+      const resJson = await res.json();
+      if (!resJson.success) {
+        alert("Failed to create new game.");
+        return;
+      }
+      window.location.href = `/game?gid=${resJson.gid}&pid=${resJson.userId}`;
+    } catch (err) {
+      alert("Error creating new game.");
+      console.error(err);
+    }
+  });
 
 document
   .getElementById("chat-submit")!

@@ -53,8 +53,20 @@
             </div>
             <button type="submit">Register</button>
         </form>
+        <div class="divider">
+            <div class="line"></div>
+            <span class="text">Or</span>
+            <div class="line"></div>
+        </div>
+        <button class="create-act">Login</button>
     </div>
 
+    <script>
+        document.querySelector(".create-act").addEventListener("click", (e) => {
+          e.preventDefault(); // prevent form submission
+          window.location.href = "/login";
+        });
+      </script>
 </body>
 
 </html>

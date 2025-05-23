@@ -124,8 +124,19 @@ class GameStore {
     }
   }
 
-  getOpenGames() {
-    const games = Games.getOpenGames();
+  async getOpenGames(userId: number | null) {
+    let games = await Games.getOpenGames();
+    if (userId) {
+      games = games.filter((game) => {
+        const gameState = this.games[game.game_id];
+        const players = gameState.players;
+        const currentPlayerFound = players.findIndex(
+          (player) => player.userId === userId,
+        );
+        return currentPlayerFound === -1;
+      });
+    }
+
     return games;
   }
 

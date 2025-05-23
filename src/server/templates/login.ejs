@@ -45,8 +45,21 @@
               <label for="password">Password</label>
               <input type="password" name="password" id="password" required>
           </div>
-          <button type="submit">Register</button>
+          <button type="submit">Login</button>
+          <div class="divider">
+            <div class="line"></div>
+            <span class="text">Or</span>
+            <div class="line"></div>
+          </div>
+          <button class="create-act">Create Account</button>
       </form>
+
+      <script>
+        document.querySelector(".create-act").addEventListener("click", (e) => {
+          e.preventDefault(); // prevent form submission
+          window.location.href = "/register";
+        });
+      </script>
   </div>
   </body>
 </html>
