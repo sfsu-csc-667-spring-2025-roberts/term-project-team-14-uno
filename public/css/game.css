@@ -288,3 +288,7 @@ html {
 .hidden {
   display: none;
 }
+
+/* .deck {
+  z-index: 1000;
+} */

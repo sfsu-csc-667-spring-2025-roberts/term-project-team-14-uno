@@ -37,14 +37,14 @@ let draw_el_disabled = true;
 // sockets
 let socket = io({ query: { userId, gid } });
 socket.on("connect", () => {
-  console.log(`connected with ${socket.id}`);
+  // console.log(`connected with ${socket.id}`);
   // socket.emit("join-game", gid);
   // socket.emit("game-state", gid, userId);
 });
 
 //for game room messages from server
 socket.on("start-game", (msg) => {
-  console.log("Start game message received", msg);
+  // console.log("Start game message received", msg);
   const wait = document.querySelector(".wait");
   if (wait) wait.remove();
 
@@ -60,17 +60,20 @@ socket.on("start-game", (msg) => {
 socket.on("state-update", (data) => {
   gameState = data;
   console.log(gameState);
-  console.log(JSON.stringify(gameState));
+  // console.log(JSON.stringify(gameState));
   // should be done on server now
   if (
     gameState?.gameState !== "uninitialized" &&
     data?.gameState !== "finished"
   ) {
-    console.log("in here in state update");
+    // console.log("in here in state update");
     // console.log("data: ", data);
     if (!gameState) return;
     if (gameState.turn === 0) {
       draw_el_disabled = false;
+    }
+    if (!document.querySelector(".deck")) {
+      draw_decks_container();
     }
     draw_decks(gameState.topCard);
     draw_players(gameState);
@@ -79,12 +82,12 @@ socket.on("state-update", (data) => {
 
 // potentially chat
 socket.on("message", (msg) => {
-  console.log("Message from room:", msg);
+  // console.log("Message from room:", msg);
 });
 
 // chat handler
 socket.on("chat-message", ({ body, user }) => {
-  console.log(`chat message received ${user.id}: ${body}`);
+  // console.log(`chat message received ${user.id}: ${body}`);
   const newChatMessage = { message: body, user: { userId: user.id } };
   chat_log.push(newChatMessage);
   const chatMsgContainer = document.querySelector(".chat__messages");
@@ -247,11 +250,9 @@ const main = async () => {
     body: JSON.stringify({ userId: userId, gid: gid }),
   });
   let resJson = await res.json();
-  console.log(resJson);
+  // console.log(resJson);
   if (resJson.success && resJson?.state === "uninitialized") {
     draw_waiting_indicator();
-  } else {
-    draw_decks_container();
   }
   const chatSubmit = document.getElementById("chat-submit");
   if (chatSubmit) {
@@ -265,7 +266,7 @@ window.addEventListener("load", main);
 
 // Main drawing hand functions
 const draw_players = (gameState: PlayerGameState) => {
-  console.log("drawing players");
+  // console.log("drawing players");
   var my_hand = gameState.myPlayer.hand;
   const radians = Math.PI / 180;
   const n = gameState.players.length;
@@ -273,7 +274,7 @@ const draw_players = (gameState: PlayerGameState) => {
   for (let i = 0; i < gameState.players.length; i++) {
     let div;
     div = selectPlayerContainer(i);
-    console.log("selected player, it exists? ", div);
+    // console.log("selected player, it exists? ", div);
     if (div) {
       div.remove(); // Remove the existing container
     }
@@ -281,7 +282,7 @@ const draw_players = (gameState: PlayerGameState) => {
     div.classList.add(`player`);
     div.classList.add(`p${i}`);
     if (!(div instanceof HTMLDivElement)) {
-      console.log("somehow the div was not a div..?");
+      // console.log("somehow the div was not a div..?");
       return;
     }
     // place player container
@@ -296,19 +297,19 @@ const draw_players = (gameState: PlayerGameState) => {
     div.style.justifyContent = "center";
     div.style.alignItems = "center";
     if (!gc) {
-      console.log("somehow gc was not defined");
+      // console.log("somehow gc was not defined");
       return;
     }
     gc.appendChild(div);
     if (i == 0) {
       draw_player_hand(my_hand, div);
       draw_player_indicator(div, dx, dy, gameState.myPlayerIdx);
-      console.log("about to do select logic");
+      // console.log("about to do select logic");
     } else {
       draw_opponent_hand(gameState.players[i], div);
     }
     if (!document.querySelector(`.select.p${i}`)) {
-      console.log("needs to draw original select");
+      // console.log("needs to draw original select");
       draw_player_select(div, dx, dy, i);
     } else {
       togglePlayerSelect(i);
@@ -323,17 +324,17 @@ function draw_player_hand(cards: Card[], player_div: HTMLDivElement) {
   let w_card = player_div.getBoundingClientRect().width / 10;
   // let h_card = graphics_spec.card.height;
   let h_card = w_card * (93 / 62);
-  console.log(
-    `graphics spec hand width: ${graphics_spec.hand.width} vs card length width ${cards.length * w_card}`,
-  );
+  // console.log(
+  //   `graphics spec hand width: ${graphics_spec.hand.width} vs card length width ${cards.length * w_card}`,
+  // );
   let w_hand = Math.min(graphics_spec.hand.width, cards.length * w_card);
-  console.log("width hand: ", w_hand);
+  // console.log("width hand: ", w_hand);
   let rad_deg = Math.PI / 180;
 
   while (hand.hasChildNodes()) hand.removeChild(hand.firstChild!);
 
   for (let i = 0; i < cards.length; i++) {
-    console.log("drawing player hand");
+    // console.log("drawing player hand");
     let div, img, rot, rot_less, rot_more, d_x, d_y;
 
     div = document.createElement("div");
@@ -394,20 +395,20 @@ function draw_player_hand(cards: Card[], player_div: HTMLDivElement) {
     });
     // TEST ANIMATE
     div.addEventListener("click", async () => {
-      console.log("should be triggering play card");
+      // console.log("should be triggering play card");
       let color: string | undefined = undefined;
       if (!isValidCard(cards[i]) || !(gameState!.turn === 0)) {
-        console.log("issue playing card, not executed");
+        // console.log("issue playing card, not executed");
         return;
       } else {
         if (cards[i].type === CardType.WILD) {
           // handle wild selection
           color = await handleWildChoice();
-          console.log("color is: ", color);
+          // console.log("color is: ", color);
         }
       }
       const rect = div.getBoundingClientRect();
-      console.log(rect);
+      // console.log(rect);
       const abs_container = document.querySelector(".layout");
       const abs_card = document.createElement("div");
       abs_card.classList.add("card");
@@ -442,10 +443,10 @@ function draw_player_hand(cards: Card[], player_div: HTMLDivElement) {
 
       // server play card
       (async () => {
-        console.log("in the async is color defined? ", color);
+        // console.log("in the async is color defined? ", color);
         const success = await play_card(cards[i], i, color);
         if (!success) {
-          console.warn("Server rejected card play");
+          // console.warn("Server rejected card play");
           // Optional: rollback UI or notify user here
         }
       })();
@@ -458,8 +459,8 @@ function draw_opponent_hand(numCards: number, player_div: HTMLDivElement) {
   var d_angle = graphics_spec.hand.fan / (numCards - 1);
   let w_card = player_div.getBoundingClientRect().width / 10;
   let h_card = w_card * (93 / 62);
-  console.log("opt1: ", graphics_spec.hand.width);
-  console.log("opt2: ", numCards * w_card - w_card * (numCards / 2));
+  // console.log("opt1: ", graphics_spec.hand.width);
+  // console.log("opt2: ", numCards * w_card - w_card * (numCards / 2));
   var w_hand = Math.min(
     graphics_spec.hand.width,
     numCards * w_card - w_card * (numCards / 2),
@@ -467,19 +468,19 @@ function draw_opponent_hand(numCards: number, player_div: HTMLDivElement) {
   if (numCards <= 2) {
     w_hand = w_card * 1.5;
   }
-  console.log("result: ", w_hand);
+  // console.log("result: ", w_hand);
   var rad_deg = Math.PI / 180;
   var div, img, rot, rot_less, rot_more, d_x, d_y, i;
 
   while (hand.hasChildNodes()) hand.removeChild(hand.firstChild!);
 
   for (i = 0; i < numCards; i++) {
-    console.log(
-      "in draw opponent hand with player div: ",
-      player_div,
-      " and opponent card num: ",
-      i,
-    );
+    // console.log(
+    //   "in draw opponent hand with player div: ",
+    //   player_div,
+    //   " and opponent card num: ",
+    //   i,
+    // );
     div = document.createElement("div");
     div.classList.add("card");
     div.style.width = w_card + "px";
@@ -550,7 +551,7 @@ const draw_player_select = (
     return;
   }
   if (document.querySelector(`.select.p${playerIndex}`)) {
-    console.log("Whoa wtf why does this already exist");
+    // console.log("Whoa wtf why does this already exist");
     return;
   }
   const div = document.createElement("div");
@@ -565,28 +566,28 @@ const draw_player_select = (
   gc.appendChild(div);
 };
 const togglePlayerSelect = (i: number) => {
-  console.log("toggling");
+  // console.log("toggling");
   const selectDiv = document.querySelector(`.select.p${i}`);
   if (!selectDiv) {
-    console.log("error toggling player select");
+    // console.log("error toggling player select");
     return;
   }
   if (i === gameState!.turn && selectDiv.classList.contains("hidden")) {
-    console.log(
-      "game state turn is : ",
-      gameState!.turn,
-      " removing hidden for player: ",
-      i,
-    );
+    // console.log(
+    //   "game state turn is : ",
+    //   gameState!.turn,
+    //   " removing hidden for player: ",
+    //   i,
+    // );
     selectDiv.classList.remove("hidden");
   }
   if (i !== gameState!.turn && !selectDiv.classList.contains("hidden")) {
-    console.log(
-      "game state turn is : ",
-      gameState!.turn,
-      " adding hidden for player: ",
-      i,
-    );
+    // console.log(
+    //   "game state turn is : ",
+    //   gameState!.turn,
+    //   " adding hidden for player: ",
+    //   i,
+    // );
     selectDiv.classList.add("hidden");
   }
 };
@@ -613,12 +614,12 @@ const draw_player_indicator = (
   const scoreDiv = document.createElement("div");
   scoreDiv.classList.add("indicator__score");
   const scoreText = document.createElement("span");
-  console.log(
-    "this should be the value of index: ",
-    playerIndex,
-    " and the players array: ",
-    gameState?.players,
-  );
+  // console.log(
+  //   "this should be the value of index: ",
+  //   playerIndex,
+  //   " and the players array: ",
+  //   gameState?.players,
+  // );
   scoreText.innerText = `${gameState?.players[playerIndex].toString()}`;
 
   scoreDiv.appendChild(scoreText);
@@ -655,7 +656,7 @@ async function play_card(
   //   // handle wild selection
   //   color = await handleWildChoice();
   // }
-  console.log("in play card: ", card);
+  // console.log("in play card: ", card);
   let action: Action;
   action = {
     type: "play",
@@ -665,7 +666,7 @@ async function play_card(
     gameId: gid!,
     wildColor: color,
   };
-  console.log("about to play card with action: ", action);
+  // console.log("about to play card with action: ", action);
   const res = await fetch("/api/game/play-card", {
     method: "post",
     headers: { "Content-Type": "application/json" },
@@ -673,7 +674,7 @@ async function play_card(
   });
   const resJson = await res.json();
   if (resJson.success) {
-    console.log("play success");
+    // console.log("play success");
     return true;
   } else {
     console.warn("Invalid action:", resJson?.msg);
@@ -683,7 +684,7 @@ async function play_card(
 
 function isValidCard(card: Card): boolean {
   if (!gameState) {
-    console.log("game state not defined");
+    // console.log("game state not defined");
     return false;
   }
   if (gameState.topCard === null) {
@@ -777,6 +778,7 @@ function draw_pile() {
   img.setAttribute("src", "card_img/card_back.svg");
   div.appendChild(img);
   div.addEventListener("click", mainPlayerDraw);
+  console.log("draw event listener attached");
   deck_div.appendChild(div);
 }
 function discard_pile(topCard: Card | null) {
@@ -798,12 +800,12 @@ function discard_pile(topCard: Card | null) {
   div.style.height = h_card + "px";
 
   let img = document.createElement("img");
-  console.log("in discard pile done all this shit about to check card image");
+
   if (!topCard) {
-    console.log("in discard pile default card blank");
+    // console.log("in discard pile default card blank");
     img.setAttribute("src", "card_img/" + "card_placeholder.svg");
   } else {
-    console.log("in discard pile setting card image: ", topCard.img);
+    // console.log("in discard pile setting card image: ", topCard.img);
     img.setAttribute("src", "card_img/" + topCard.img);
   }
   div.appendChild(img);
@@ -811,18 +813,18 @@ function discard_pile(topCard: Card | null) {
 }
 
 function handleChatSubmit(e: Event) {
-  console.log("handle chat submit");
+  // console.log("handle chat submit");
   const input = document.getElementById("chat-post") as HTMLInputElement;
   if (!input) {
-    console.log("no input");
+    // console.log("no input");
     return;
   }
   const message = input?.value;
   if (!message) {
-    console.log("no message");
+    // console.log("no message");
     return;
   }
-  console.log("gotten here");
+  // console.log("gotten here");
   input.value = "";
   fetch("/api/chat/post", {
     method: "post",
@@ -832,6 +834,7 @@ function handleChatSubmit(e: Event) {
 }
 
 async function mainPlayerDraw() {
+  console.log("draw event");
   if (draw_el_disabled) {
     return;
   }
@@ -883,10 +886,10 @@ function animateCardToHand(playerIndex: number) {
   abs_card.style.transition = "all 0.75s ease-in-out";
   abs_container.appendChild(abs_card);
 
-  console.log("right BEFORE timeout in animation card to hand");
+  // console.log("right BEFORE timeout in animation card to hand");
 
   setTimeout(() => {
-    console.log("INSIDE timeout in animation card to hand");
+    // console.log("INSIDE timeout in animation card to hand");
     const newRect = lastPlayerHandCard.getBoundingClientRect();
     abs_card.style.left = `${newRect.left + window.scrollX}px`;
     abs_card.style.top = `${newRect.top + window.scrollY}px`;
