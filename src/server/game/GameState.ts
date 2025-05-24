@@ -63,9 +63,9 @@ class GameState {
       [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
     }
     // distribute cards
-    // let num_cards_per_hand = 7
+    let num_cards_per_hand = 7;
     // this is for testing
-    let num_cards_per_hand = 2;
+    // let num_cards_per_hand = 2;
     for (let i = 0; i < this.numPlayers * num_cards_per_hand; i++) {
       this.players[i % this.numPlayers].hand.push(this.deck[i]);
     }
@@ -76,10 +76,8 @@ class GameState {
   }
 
   update(action: Action) {
-    console.log("in update with action: ", action);
     switch (this.state) {
       case "wait":
-        console.log("in wait");
         if (action.type === "play" && action.card && action.cardIndex != null) {
           this.state = "play";
           const player = this.players[this.turn];
@@ -89,11 +87,9 @@ class GameState {
             action.playerId,
             action.wildColor ? action.wildColor : null,
           );
-          console.log("the card played was: ", cardPlayed);
-          console.log("after card played");
+
           if (!cardPlayed) {
             // handle error
-            console.log("in update this is not a card played...");
           } else {
             // it has to be non null now
             if (!this.topCard) {
@@ -101,14 +97,7 @@ class GameState {
                 "somehow top card undefined after successful card play",
               );
             }
-            console.log(
-              "**ok it seems play was correct now top card is:  ",
-              this.topCard,
-            );
-            console.log(
-              "about to call topCard to db type top is: ",
-              typeof this.topCard,
-            );
+
             const cardForUpdate: CardDB = this.topCard.toCardDB();
             // unknown in frontend type
             cardForUpdate.game_id = this.gameId;
@@ -139,7 +128,6 @@ class GameState {
           this.turn = this.incrementTurn();
           Game.updateGame(this.serializeOnlyGS());
           this.broadcastStateUpdate();
-          console.log("anout to finish the draw block");
         }
         break;
       case "play":
@@ -155,15 +143,12 @@ class GameState {
     color: string | null,
   ): Card | null {
     // check if valid
-    console.log("in handle play card: ", card);
     const cardPlayed: Card = this.players[this.turn].hand[cardIndex];
     if (!this.isValidCard(card)) {
       return null;
     }
-    console.log("in handle play card it is indeed valid");
     this.topCard = cardPlayed;
     this.players[this.turn].hand.splice(cardIndex, 1);
-    console.log("in handle play card removed from player hand");
     // handle special card
     if (cardPlayed.type === CardType.REVERSE) {
       const playerNotify_1 = this.incrementTurn();
@@ -210,20 +195,13 @@ class GameState {
       // do something
       if (!(color && color.toUpperCase() in Color)) {
         // Invalid color
-        console.log("incorrect wild color: ", color);
         throw new Error("the action color from wild is incorrect");
       }
-      console.log("this is the actual color: ", color, " and");
-      console.log(
-        "selected color for wild is: ",
-        Color[color.toUpperCase() as keyof typeof Color],
-      );
       this.topCard.color = Color[color.toUpperCase() as keyof typeof Color];
       // notify next player of color picked
 
       // this indicates it is a wild draw 4
       if (card.value === 4) {
-        console.log("it is a draw 4 card");
         // first notify skipped player of draw
         const player = this.incrementTurn();
         let nextPlayerSocket =
@@ -273,7 +251,7 @@ class GameState {
           db_card.location = "hand";
           return db_card;
         });
-        console.log("result of mapped cards for draw 4: ", mapped_cards);
+
         Game.updateCards(mapped_cards);
         this.players[player].hand.push(...drawnCards);
       } else {
@@ -296,7 +274,6 @@ class GameState {
         }
       }
     }
-    console.log("in handle play card about to return");
     this.state = "wait";
     this.turn = this.incrementTurn();
     return cardPlayed;
@@ -339,13 +316,10 @@ class GameState {
       return null;
     }
     this.players[idx].hand.push(drewCard);
-    console.log("in handle draw, card drawn is: ", drewCard);
     return drewCard;
   }
   getLastCardInHand(userId: number): Card | null {
-    // console.log("in get last card in hand")
     const player = this.players.findIndex((player) => player.userId === userId);
-    // console.log("players: ", this.players, " should have found player: ", player)
     if (player === -1) {
       return null;
     }
@@ -387,7 +361,6 @@ class GameState {
   }
 
   broadcastStateUpdate() {
-    console.log("broadcast state update");
     for (let i = 0; i < this.numPlayers; i++) {
       this.messagePlayer(
         i,
@@ -397,20 +370,16 @@ class GameState {
     }
   }
   broadcastWinner(player: Player) {
-    console.log("broadcast winner");
     for (let i = 0; i < this.numPlayers; i++) {
       this.messagePlayer(i, { winner: player }, "win-notification");
     }
   }
 
   getPlayerSubset(playerId: number): PlayerGameState | null {
-    console.log("in player subset: ", playerId);
-
     const playerIdx = this.players.findIndex(
       (player) => player.userId === playerId,
     );
     if (playerIdx === null || playerIdx < 0) {
-      console.log("whopsie on found index? ", playerIdx);
       return null;
     }
 
@@ -451,7 +420,6 @@ class GameState {
       id: player.uuid,
       username: player.username,
     }));
-    console.log("player count from serialization: ", players.length);
 
     const cards: {
       id: string;
@@ -528,32 +496,30 @@ class GameState {
 
   static fromSQL(game: GameDB): GameState {
     const gs = new GameState(game.game.game_id, game.game.num_players);
-    console.log(
-      "starting from sql: ",
-      game.cards.filter((card) => card.location === "discard"),
-    );
 
     gs.state = game.game.state;
     gs.turn = game.game.turn;
     gs.turnIncrement = game.game.turn_increment;
     const card = game.cards.find((card) => card.id === game.game.top_card_id);
-    if (!card) throw new Error("unable to find top card");
-    gs.topCard = new Card(
-      card.value,
-      card.img,
-      Color[card.color as keyof typeof Color],
-      CardType[card.type as keyof typeof CardType],
-      card.id,
-    );
+    if (!card) {
+      console.log("top card is null...");
+      gs.topCard = null;
+    } else {
+      gs.topCard = new Card(
+        card.value,
+        card.img,
+        Color[card.color as keyof typeof Color],
+        CardType[card.type as keyof typeof CardType],
+        card.id,
+      );
+    }
 
-    // 1. Restore players
+    // Restore players
     gs.players = game.players.map((p, idx) => {
       return new Player(p.user_id, "", p.player_index, p.id); // You may want to load username separately
     });
 
-    // console.log("in from sql we now have players: ", gs.players)
-
-    // 2. Restore deck & hands
+    // Restore deck & hands
     const deckCards = game.cards
       .filter((c) => c.location === "deck")
       .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
@@ -570,13 +536,8 @@ class GameState {
           card.id,
         ),
     );
-    // console.log("in from sql hand cards: ", handCards)
 
     handCards.forEach((card) => {
-      // console.log("Comparing owner_id:", card.owner_id);
-      // gs.players.forEach(p => {
-      //   console.log("Player UUID:", p.uuid, "Match:", p.uuid === card.owner_id);
-      // });
       const player = gs.players.find((p) => p.uuid === card.owner_id);
       if (!player) return;
       player.hand.push(
@@ -589,8 +550,6 @@ class GameState {
         ),
       );
     });
-
-    console.log("about to return in game state with top card: ", gs.topCard);
 
     return gs;
   }

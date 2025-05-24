@@ -20,7 +20,6 @@ const addGameRecord = async (gs: GameStateDB) => {
 };
 
 const serializeGame = async (state: GameDB) => {
-  console.log("in serialize game");
   // quickCheckHelperInit(state)
   // add record to games table
   const gameStateUpdate = await serializeGameStateHelper(state.game);
@@ -51,7 +50,6 @@ const serializeGameStateHelper = async (game: GameStateDB) => {
   `;
   try {
     await db.none(query, game);
-    console.log(`Game ${game.game_id} upserted successfully.`);
     return true;
   } catch (error) {
     console.error(`Failed to upsert game ${game.game_id}:`, error);
@@ -91,7 +89,6 @@ const cardsStateUpdateHelper = async (cards: CardDB[]) => {
 
   try {
     await db.none(insert);
-    console.log(`Upserted ${cards.length} cards.`);
     return true;
   } catch (error) {
     console.error("Error during bulk card upsert:", error);
@@ -118,7 +115,6 @@ const playersStateUpdateHelper = async (players: PlayerDB[]) => {
 
   try {
     await db.none(insert);
-    console.log(`Upserted ${players.length} players.`);
     return true;
   } catch (error) {
     console.error("Error during bulk player upsert:", error);
@@ -127,13 +123,11 @@ const playersStateUpdateHelper = async (players: PlayerDB[]) => {
 };
 
 const getGames = async (): Promise<GameStateDB[]> => {
-  console.log("hello");
   const query = `
   SELECT * FROM games
 `;
   try {
     const res = await db.any(query);
-    console.log("games db: ", res);
     return res;
   } catch (error) {
     console.log("error fetching games from db: ", error);
@@ -158,7 +152,6 @@ const updateGame = async (state: GameStateDB): Promise<boolean> => {
   ];
   try {
     const res = await db.none(query, values);
-    // console.log("games db: ", res);
     return true;
   } catch (error) {
     console.log("error updating games table in game state: ", error);
@@ -183,7 +176,6 @@ const getCards = async (gid: string): Promise<CardDB[]> => {
 `;
   try {
     const res = await db.any(query);
-    // console.log("cards db: ", res);
     const cards = res.map((card) => ({
       id: card.id,
       game_id: card.game_id,
@@ -231,7 +223,6 @@ const updateCard = async (card: CardDB): Promise<boolean> => {
 
   try {
     await db.none(query, values);
-    console.log(`Updated card with id ${card.id}`);
     return true;
   } catch (err) {
     console.error("Error during card update:", err);
@@ -281,7 +272,6 @@ const updateCards = async (cards: CardDB[]): Promise<boolean> => {
 
   try {
     await db.none(query, allValues);
-    console.log(`Updated ${cards.length} cards`);
     return true;
   } catch (err) {
     console.error("Error during batch card update:", err);
@@ -331,7 +321,6 @@ const getPlayers = async (gid: string): Promise<PlayerDB[]> => {
   `;
   try {
     const res = await db.any(query, [gid]);
-    console.log("players db: ", res);
     const players = res.map((player) => ({
       game_id: gid,
       player_index: Number(player.player_index),
@@ -352,7 +341,6 @@ const getSockets = async (gid: string): Promise<Socket[]> => {
 `;
   try {
     const res = await db.any(query);
-    console.log("sockets db: ", res);
     const sockets = res.map((socket) => ({
       socket_id: socket.socket_id,
       player_id: socket.player_id,
@@ -370,7 +358,6 @@ const getOpenGames = async (): Promise<GameStateDB[]> => {
   let query = "SELECT * FROM games WHERE state='uninitialized'";
   try {
     const res = await db.any(query);
-    // console.log("games db: ", res);
     return res;
   } catch (error) {
     console.log("error fetching open games: ", error);

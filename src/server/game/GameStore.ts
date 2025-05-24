@@ -59,14 +59,15 @@ class GameStore {
       players = await Games.getPlayers(g.game_id);
       cards = await Games.getCards(g.game_id);
       const discard = cards.find((card) => card.id === g.top_card_id);
-      if (!discard) throw new Error("unable to find top card");
+      if (!discard && g.state !== "uninitialized") {
+        console.log("this is the game: ", g);
+      }
       cards = cards.filter((card) => card.location !== "discard");
-      cards.push(discard);
+      if (discard) cards.push(discard);
       game_db = { game: g, players: players, cards: cards };
       gs = GameState.fromSQL(game_db);
       this.games[g.game_id] = gs;
       sockets = await Games.getSockets(g.game_id);
-      console.log("in game store init with initialized game: ", gs.players);
 
       const socketMap = new Map<number, string>(); // user_id -> socket_id
       sockets.forEach((s) => {
@@ -82,10 +83,6 @@ class GameStore {
           socketId: playerSocketId ? playerSocketId : null,
         };
       });
-      // players.forEach((player) => {
-      //   const playerSocketId = socketMap.get(player.user_id) ?? null;
-      //   this.players[player.user_id.toString()][g.game_id] = {socketId: playerSocketId ? playerSocketId : null }
-      // });
     }
   }
 
@@ -97,7 +94,6 @@ class GameStore {
       this.players[userId] = {};
     }
     this.players[userId][gs.gameId] = { socketId: null };
-    // return {gameId: gs.gameId, startGame: false}; // maybe update if we allow single player
     Games.addGameRecord(gs.serializeOnlyGS());
     return gs.gameId;
   }
@@ -105,7 +101,6 @@ class GameStore {
   joinSpecificGame(userId: number, username: string, gid: string) {
     const game = this.games[gid];
     if (!game) {
-      console.log("unable to find specific game");
       return false;
     }
     this.games[gid].addPlayer(userId, username);
@@ -126,11 +121,9 @@ class GameStore {
 
   async getOpenGames(userId: number | null) {
     let games = await Games.getOpenGames();
-    console.log("get open games: ", games);
     if (userId) {
       games = games.filter((game) => {
         const gameState = this.games[game.game_id];
-        console.log("game state in filter: ", gameState);
         const players = gameState.players;
         const currentPlayerFound = players.findIndex(
           (player) => player.userId === userId,
@@ -143,14 +136,10 @@ class GameStore {
   }
 
   updateSocket(userId: number, socketId: string, gameId: string) {
-    console.log("player entry in game manager: ", this.players[userId]);
-    console.log("update socket user: ", userId, " and socket: ", socketId);
-
     const oldSocketId = this.players[userId]?.[gameId]?.socketId;
     if (oldSocketId && oldSocketId !== socketId) {
       const oldSocket = getIO().sockets.sockets.get(oldSocketId);
       if (oldSocket) {
-        console.log("Disconnecting old socket:", oldSocketId);
         oldSocket.disconnect(true);
       }
     }
@@ -164,12 +153,6 @@ class GameStore {
   }
 
   removeSocket(userId: number, gid: string) {
-    console.log(
-      "in game manager calling remove socket: ",
-      userId,
-      " game id: ",
-      gid,
-    );
     if (this.players[userId] && this.players[userId][gid]) {
       if (
         this.games[gid] &&
@@ -194,7 +177,6 @@ class GameStore {
       );
       if (remaining.length === 0) {
         delete this.games[gid];
-        console.log(`Game ${gid} removed due to all players disconnecting`);
       }
     }
   }
@@ -206,7 +188,6 @@ class GameStore {
 
     for (let id in this.games) {
       if (this.games[id].state === "uninitialized") {
-        console.log("founduninitialized game: ", id);
         return this.games[id].players.length;
       }
     }

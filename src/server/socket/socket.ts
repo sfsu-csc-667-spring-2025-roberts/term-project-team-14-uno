@@ -15,15 +15,12 @@ export function initSocket(server: HttpServer) {
   io.on("connection", (socket) => {
     // @ts-ignore
     let { id, userId, username } = socket.request.session;
-    console.log(
-      `here is the (undefined): ${id} and user: ${userId} and the username: ${username} from the session middleware`,
-    );
-    userId = Number(socket.handshake.query.userId);
     const gid = socket.handshake.query.gid;
+    //this is for testing
+    // userId = Number(socket.handshake.query.userId);
 
     if (!gid || gid === "lobby") {
       // LOBBY CONNECTION
-      console.log(`User ${userId} connected to the lobby`);
       socket.join("lobby");
       io!.to("lobby").emit("lobby-message", `User ${userId} joined the lobby`);
 

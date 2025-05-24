@@ -7,10 +7,10 @@ import { Request, Response } from "express";
 const router = express.Router();
 
 router.post("/register", async (req: Request, res: Response) => {
-  console.log("reg hit");
   const { email, password } = req.body;
 
   const id = await User.register(email, password);
+  console.log("user created: ", id);
 
   //   @ts-ignore
   req.session.userId = id;
@@ -21,10 +21,8 @@ router.post("/register", async (req: Request, res: Response) => {
 });
 
 router.post("/login", async (req: Request, res: Response) => {
-  console.log("login hit");
   const { email, password } = req.body;
   const user = await User.login(email, password);
-  console.log(user);
   if (!user) {
     res.status(401).json({ success: false, id: null });
     return;
@@ -50,8 +48,8 @@ router.get("/session", async (req: Request, res: Response) => {
   let username = req.session?.username;
 
   //this is for testing
-  userId = 111;
-  username = "miles@gmail.com";
+  // userId = 111;
+  // username = "miles@gmail.com";
 
   if (userId) {
     res.json({ userId, username });

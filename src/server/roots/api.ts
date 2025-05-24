@@ -8,7 +8,7 @@ import { authMiddleware } from "../middleware/auth";
 
 const router = express.Router();
 
-router.use("/auth", authMiddleware, authRouter);
+router.use("/auth", authRouter);
 router.use("/game", authMiddleware, gameRouter);
 router.use("/chat", authMiddleware, chatRouter);
 

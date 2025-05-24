@@ -12,25 +12,15 @@ router.post("/post", async (req: Request, res: Response) => {
   let username = req.session.username;
   const { message, gid } = req.body;
 
-  console.log("chat post hit with uid: ", userId, "and username: ", username);
-
   // this is for testing
-  userId = req.body.userId;
-  username = "miles@gmail.com";
+  // userId = req.body.userId;
+  // username = "miles@gmail.com";
 
   if (!message || !userId || !gid) {
-    console.log("no chat message or gid or userid");
     res.status(500).json({ success: false });
     return;
   }
-  console.log(
-    "chat message: ",
-    message,
-    " userid: ",
-    userId,
-    " game id: ",
-    gid,
-  );
+
   getIO()
     .to(gid)
     .emit("chat-message", {

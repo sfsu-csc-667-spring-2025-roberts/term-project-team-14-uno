@@ -644,19 +644,6 @@ async function play_card(
   cardIndex: number,
   color: string | undefined,
 ) {
-  // if (!(gameState!.turn === 0)) {
-  //   //show invalid
-  //   return false;
-  // }
-  // if (!isValidCard(card)) {
-  //   //show invalid?
-  //   return false;
-  // }
-  // if (card.type === CardType.WILD) {
-  //   // handle wild selection
-  //   color = await handleWildChoice();
-  // }
-  // console.log("in play card: ", card);
   let action: Action;
   action = {
     type: "play",
@@ -666,7 +653,7 @@ async function play_card(
     gameId: gid!,
     wildColor: color,
   };
-  // console.log("about to play card with action: ", action);
+
   const res = await fetch("/api/game/play-card", {
     method: "post",
     headers: { "Content-Type": "application/json" },
@@ -754,7 +741,7 @@ function draw_decks_container() {
 }
 
 function draw_decks(topCard: Card | null) {
-  console.log("drawing decks");
+  // console.log("drawing decks");
   draw_pile();
   discard_pile(topCard);
 }
@@ -778,12 +765,10 @@ function draw_pile() {
   img.setAttribute("src", "card_img/card_back.svg");
   div.appendChild(img);
   div.addEventListener("click", mainPlayerDraw);
-  console.log("draw event listener attached");
   deck_div.appendChild(div);
 }
 function discard_pile(topCard: Card | null) {
   // const deck_div = document.querySelector(".discard")
-  console.log("in discard pile");
   const deck_div = document.querySelector(".deck");
   if (!deck_div) {
     return;
@@ -791,8 +776,6 @@ function discard_pile(topCard: Card | null) {
   const w_card = (deck_div.getBoundingClientRect().width * 5) / 10;
   const h_card = w_card * (93 / 62);
   if (!deck_div) return;
-  console.log("in discard pile past the check for deck div");
-  // while (deck_div.hasChildNodes()) deck_div.removeChild(deck_div.firstChild);
   let div = document.createElement("div");
   div.classList.add("card");
   div.classList.add("discard");
@@ -834,7 +817,6 @@ function handleChatSubmit(e: Event) {
 }
 
 async function mainPlayerDraw() {
-  console.log("draw event");
   if (draw_el_disabled) {
     return;
   }
